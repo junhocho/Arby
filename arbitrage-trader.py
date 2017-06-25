@@ -67,6 +67,21 @@ commision = 0.004
 # BITHUMB : MAKER/TAKER 0.15 %
 # 0.0005 BTC
 # 0.01 ETC/ETH/LTC/DASH/XRP
+# BITHUMB has no fee with coupon.
+
+
+# 일반거래
+# 레벨    최근 30일간 거래금액    Maker   Taker
+# Lv.1    5,000,000원 미만    0.15%   0.15%
+# Lv.2    50,000,000원 미만   0.12%   0.13%
+# Lv.3    500,000,000원 미만  0.09%   0.11%
+# Lv.4    2,500,000,000원 미만    0.06%   0.09%
+# Lv.5    10,000,000,000원 미만   0.03%   0.07%
+# VIP 50,000,000,000원 미만   0%  0.05%
+# VVIP    50,000,000,000원 이상   0%  0%
+
+
+
 update_period = 10 # seconds
 exchange_count = 0
 
@@ -217,21 +232,31 @@ def calculate_premium(count):
     # 	print('POLO :   \tBUY: ', p_buy_price, '\tSELL: ', p_sell_price, '\t|')
     print(pform.format('BITHUMB', bith_bot.tarbtc_buy_price, bith_bot.tarbtc_sell_price))
     print(pform.format('POLONIEX', polo_bot.buy_price, polo_bot.sell_price))
-    if(ema_grad>0 and count>60):
-        if(bith_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)): # TODO Analyze each if
+    prem = 0
+    if(ema_grad>0 and count>10): # TODO default count 60
+        if(bith_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)):
+            #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
-            print('\tSELL BITHUMB ', coin, '\tBUY POLONIEX BTC\t')
+            # print('POLONIEX BUY BTC\t / BITHUMB BUY', coin)
+            print('POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC')
             print('\tPREM RATIO: ', (bith_bot.tarbtc_sell_price / polo_bot.buy_price - 1)*100, ' %')
-        if(polo_bot.sell_price * (1+commision+threshold) > bith_bot.tarbtc_buy_price): # Each market threshold need comission
+            prem = 1
+        if(polo_bot.sell_price * (1-commision-threshold) > bith_bot.tarbtc_buy_price): # Each market threshold need comission
+            #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             print('#################### PREMIUM ALERT ####################\a')
+            print('POLO : Target -> BTC   /    BITHUMB :  BTC -> Target')
+            #print('POLONIEX SELL',coin, '\t/ BITHUMB SELL', coin)
             print('\tSELL POLONIEX ', coin, '\tBUY BITHUMB BTC')
             print('\tPREM RATIO: ', (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100, ' %')
+            prem = -1
     print()
-    usdkrw = Currency('USDKRW')
-    curr = float(usdkrw.get_ask())
-    ret = urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
-    btcusd = json.loads(ret.read())['result']['price']
-    print("BTC premeium KRW/USD : " + str((bith_bot.btckrw_buy_price / (curr * btcusd)  )))
+    if False and count%10 == 0:
+        usdkrw = Currency('USDKRW')
+        curr = float(usdkrw.get_ask())
+        ret = urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
+        btcusd = json.loads(ret.read())['result']['price']
+        print("BTC premeium KRW/USD : ",str((bith_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
+    return prem
 
 #################################################
 def open_order_check():
@@ -246,11 +271,12 @@ def open_order_check():
 ####
 
 class wallet:
-    def __init__():
-         self.polo_btc =1
+    def __init__(coin):
+         self.polo_btc = 0.1 # 3,360,000
+         self.bith_btc = 0.1 # 3,360,000
+         self.bith_krw = 200,000
+
          self.polo_tar = 1
-         self.bith_btc = 1
-         self.bith_krw = 1
          self.bith.tar = 1
 
     def polo_tar_buy_btc_sell(): pass
@@ -260,10 +286,11 @@ class wallet:
     def bith_tar_buy():
         pass
     def bith_btc_sell():
-        pass 
+        pass
     def bith_btc_buy():
         pass
 
+    # BITHUMB api slower -> do first
     def bith_sell_polo_buy():
         bith_orderbook()
         bith_tar_sell()
@@ -274,24 +301,33 @@ class wallet:
 
 
     def polo_sell_bith_buy(): #1
-        status = polo_orderbook()
-        polo_tar_sell_btc_buy()
-
         status = bith_orderbook()
         bith_btc_sell()
         bith_tar_buy()
 
+        status = polo_orderbook()
+        polo_tar_sell_btc_buy()
+
+    def arbitrage():
+        pass
+
 
 #################################################
 count = 0
+prem_alert = False
 time.sleep(update_period)
 # count +=1
 
 # TODO EMA visualize
 while(True):
     iter_start = time.time()
+
     collect_price(count)
-    calculate_premium(count)
+    if prem_alert: # Prem alerted previously
+        wallet.arbitrage(prem)
+        prem_alert = False
+    prem_alert = calculate_premium(count)
+
     iter_duration = time.time() - iter_start
     count+=1
     tsleep = max([update_period-iter_duration, 0])
