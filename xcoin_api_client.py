@@ -15,6 +15,7 @@ import urllib.parse
 import pycurl
 import json
 
+import requests
 
 class XCoinAPI:
 	api_url = "https://api.bithumb.com";
@@ -85,4 +86,5 @@ class XCoinAPI:
 
 		curl_handle.close();
 
-		return (json.loads(self.contents));
+                #return requests.get(url).json();
+		return requests.get(url).json()#return (json.loads(self.contents));

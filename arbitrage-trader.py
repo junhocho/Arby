@@ -165,6 +165,8 @@ class bithumb_bot:
 
     def collect_price(self):
         btc_orderbook = b_api.xcoinApiCall("/public/orderbook/BTC", {})
+        #ret = urlopen(urllib.request.Request('https://api.bithumb.com/public/orderbook/BTC'))
+        #btc_orderbook = json.loads(ret.read())
 
 
         # TODO : BTC amount limit??
