@@ -158,10 +158,10 @@ class bithumb_bot:
         self.coin = coin
         self.buy_price = None
         self.sell_price = None
-        self.krwbtc_buy_price = None
-        self.krwbtc_sell_price = None
-        self.krwtar_buy_price = None
-        self.krwtar_sell_price = None
+        self.btckrw_buy_price = None
+        self.btckrw_sell_price = None
+        self.tarkrw_buy_price = None
+        self.tarkrw_sell_price = None
 
     def collect_price(self):
         btc_orderbook = b_api.xcoinApiCall("/public/orderbook/BTC", {})
@@ -170,10 +170,10 @@ class bithumb_bot:
 
 
         # TODO : BTC amount limit??
-        self.krwbtc_buy_price = float(btc_orderbook["data"]["asks"][0]["price"])
-#         print(self.krwbtc_buy_price)
-        self.krwbtc_sell_price = float(btc_orderbook["data"]["bids"][0]["price"])
-#         print(self.krwbtc_sell_price)
+        self.btckrw_buy_price = float(btc_orderbook["data"]["asks"][0]["price"])  # TODO : Bithumb need to check BTC amount too.
+#         print(self.btckrw_buy_price)
+        self.btckrw_sell_price = float(btc_orderbook["data"]["bids"][0]["price"])
+#         print(self.btckrw_sell_price)
 
         target_orderbook = b_api.xcoinApiCall("/public/orderbook/" + coin, {})
 
@@ -181,19 +181,18 @@ class bithumb_bot:
         while(float(target_orderbook["data"]["asks"][count]["quantity"])<amount):
             count+=1
 #         print(count)
-        self.krwtar_buy_price = float(target_orderbook["data"]["asks"][count]["price"])
+        self.tarkrw_buy_price = float(target_orderbook["data"]["asks"][count]["price"])
 #         print(tarkrw_buy_price)
         # BTC sell -> TAR buy
-        self.tarbtc_buy_price = self.krwtar_buy_price/self.krwbtc_sell_price
-
+        self.tarbtc_buy_price = self.tarkrw_buy_price/self.btckrw_sell_price
 
         count = 0
         while(float(target_orderbook["data"]["bids"][count]["quantity"])<amount):
             count+=1
 #         print(count)
-        self.krwtar_sell_price = float(target_orderbook["data"]["bids"][count]["price"])
+        self.tarkrw_sell_price = float(target_orderbook["data"]["bids"][count]["price"])
         # BTC buy -> TAR sell
-        self.tarbtc_sell_price = self.krwtar_sell_price/self.krwbtc_buy_price
+        self.tarbtc_sell_price = self.tarkrw_sell_price/self.btckrw_buy_price
 #         print(tarkrw_sell_price)
 
 #         print(self.tarbtc_buy_price)
@@ -265,19 +264,19 @@ def calculate_premium(count):
     print()
     prem = 0
     if(ema_grad > 0 and count>60): # TODO default count 60
-        if(bith_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)):
+        if(bith_bot.tarbtc_sell_price < polo_bot.buy_price * (1+commision+threshold)): #TODO sign reversed 
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
             print()
             print('\tPOLO : BTC -> {}   /    BITHUMB :  {} -> BTC'.format(coin,coin))
-            print('\tPREM RATIO: ', (bith_bot.tarbtc_sell_price / polo_bot.buy_price - 1)*100, ' %')
+            print('\tPREM RATIO: ', (polo_bot.buy_price / bith_bot.tarbtc_sell_price - 1)*100, ' %')
             prem = 1
-        if(polo_bot.sell_price * (1-commision-threshold) > bith_bot.tarbtc_buy_price): # Each market threshold need comission
+        if(polo_bot.sell_price * (1-commision-threshold) < bith_bot.tarbtc_buy_price): # Each market threshold need comission
             #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             print('#################### PREMIUM ALERT ####################\a')
             print()
             print('\tPOLO : {} -> BTC   /    BITHUMB :  BTC -> {}'.format(coin,coin))
-            print('\tPREM RATIO: ', (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100, ' %')
+            print('\tPREM RATIO: ', (bith_bot.tarbtc_buy_price  / polo_bot.sell_price - 1)*100, ' %') # Can be minus though..
             prem = -1
         print()
     if count%10 == 0:
@@ -285,7 +284,7 @@ def calculate_premium(count):
         curr = float(usdkrw.get_ask())
         ret = urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
         btcusd = json.loads(ret.read())['result']['price']
-        print("BTC premeium KRW/USD : ",str((bith_bot.krwbtc_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
+        print("BTC premeium KRW/USD : ",str((bith_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
     return prem
 
 #################################################
@@ -358,7 +357,7 @@ class wallet:
         return total_btc
 
     def tar_polo_buy_btc_sell(self):
-        btc_needed = amount * (polo_bot.buy_price * (1+commision))
+        btc_needed = amount / (polo_bot.buy_price * (1+commision))
 
         if (self.btc_polo < btc_needed  ):
             # Not enough money to buy coin
@@ -369,7 +368,7 @@ class wallet:
             return True
 
     def tar_polo_sell_btc_buy(self):
-        btc_earned = amount * (polo_bot.sell_price * (1-commision))
+        btc_earned = amount / (polo_bot.sell_price * (1-commision))
 
         if (self.tar_polo < amount):
             return False
@@ -387,7 +386,7 @@ class wallet:
             self.bith_krw += krw_earned
             self.tar_bith -= amount
 
-        btc_earned = krw_earned / bith_bot.krwbtc_sell_price
+        btc_earned = krw_earned / bith_bot.btckrw_sell_price
 
         self.bith_krw -= krw_earned
         self.btc_bith -= btc_earned
@@ -396,7 +395,7 @@ class wallet:
     # TODO brain teasing. later
     def btc_bith_sell_tar_buy(self): # BTC -> KRW
         krw_needed = amount * bith_bot.krwtar_buy_price
-        btc_tosell = krw_needed / bith_bot.krwbtc_buy_price
+        btc_tosell = krw_needed / bith_bot.btckrw_buy_price
 
         if (self.btc_bith < btc_tosell):
             return False
