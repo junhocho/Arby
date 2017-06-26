@@ -67,8 +67,8 @@ pform_dict = {'ETH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
 polo_coin = 'BTC_'+coin
 pform = pform_dict[coin]
 
-threshold = 0.005 # 0.01
-commision = 0.004
+threshold = 0.01 # 0.01
+commision = 0.0025 # Polo
 
 # POLO
 # Maker   Taker   Trade Volume (trailing 30 day avg)
@@ -325,6 +325,7 @@ class wallet:
 
         self.btc_init = self.btc_polo + self.btc_bith
         self.tar_init = self.tar_polo + self.tar_bith
+        self.btcsum_init = self.asset_in_btc()
 
         self.prem_pos = 0
         self.prem_neg = 0
@@ -342,7 +343,8 @@ class wallet:
         print('\t{} : {}'.format('BTC',self.btc_bith))
         print('\t{} : {}'.format(coin,self.tar_bith))
         print('\t{} : {}'.format('KRW',self.bith_krw))
-        print('\tWorths BTC : ', self.asset_in_btc())
+        btcsum = self.asset_in_btc()
+        print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, btcsum/self.btcsum_init))
         btc_ratio = (self.btc_polo + self.btc_bith)/self.btc_init
         tar_ratio = (self.tar_polo + self.tar_bith)/self.tar_init
         print('\tCoin ratio : BTC : {}\t {} : {}'.format(btc_ratio, coin, tar_ratio))
