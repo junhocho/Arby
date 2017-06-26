@@ -263,7 +263,7 @@ def calculate_premium(count):
     print("Pemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}".format(coin, coin, (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100))
     print()
     prem = 0
-    if(ema_grad > 0 and count>60): # TODO default count 60
+    if(ema_grad   and count>60): # TODO default count 60
         if(bith_bot.tarbtc_sell_price < polo_bot.buy_price * (1+commision+threshold)): #TODO sign reversed 
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
@@ -378,7 +378,7 @@ class wallet:
             return True
 
     def tar_bith_sell_buy_btc(self):
-        krw_earned = amount * bith_bot.krwtar_sell_price #tarkrw
+        krw_earned = amount * bith_bot.tarkrw_sell_price #tarkrw
 
         if (self.tar_bith < amount):
             return False
@@ -394,7 +394,7 @@ class wallet:
 
     # TODO brain teasing. later
     def btc_bith_sell_tar_buy(self): # BTC -> KRW
-        krw_needed = amount * bith_bot.krwtar_buy_price
+        krw_needed = amount * bith_bot.tarkrw_buy_price
         btc_tosell = krw_needed / bith_bot.btckrw_buy_price
 
         if (self.btc_bith < btc_tosell):
