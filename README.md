@@ -1,7 +1,7 @@
 pip install yahoo-finance
 
 
-`python coin-arbitrage.py ETH`
+`python -u coin-arbitrage.py ETH  | tee ETC.log `
 
 ETH|ETC|XRP|DASH|LTC
 
