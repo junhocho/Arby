@@ -21,6 +21,14 @@ from yahoo_finance import Currency
 
 coin = sys.argv[1]
 
+ema_pred_flag = 0
+
+def ema_pred(flag):
+    if flag:
+        return (ema_grad > 0  and count>60) # TODO default count 60
+    else:
+        return True
+
 b_api_key = os.environ["BITHUMB_API_KEY"]
 b_api_secret = os.environ["BITHUMB_API_SECRET"]
 #logger = SlackLogger(os.environ["BITHUMB_API_NAME"])
@@ -263,7 +271,7 @@ def calculate_premium(count):
     print("Pemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}".format(coin, coin, (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100))
     print()
     prem = 0
-    if(ema_grad > 0  and count>60): # TODO default count 60
+    if(ema_pred(ema_pred_flag)):
         if(bith_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)): # TODO Threshold : ratio? or delta?
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
@@ -390,7 +398,7 @@ class wallet:
         btc_earned = amount * bith_bot.tarbtc_sell_price
         #self.bith_krw -= krw_earned
 
-        self.btc_bith -= btc_earned
+        self.btc_bith += btc_earned
         return True
 
     # TODO brain teasing. later
