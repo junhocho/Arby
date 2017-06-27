@@ -263,20 +263,20 @@ def calculate_premium(count):
     print("Pemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}".format(coin, coin, (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100))
     print()
     prem = 0
-    if(ema_grad   and count>60): # TODO default count 60
-        if(bith_bot.tarbtc_sell_price < polo_bot.buy_price * (1+commision+threshold)): #TODO sign reversed 
+    if(ema_grad > 0  and count>60): # TODO default count 60
+        if(bith_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)): # TODO Threshold : ratio? or delta?
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
             print()
             print('\tPOLO : BTC -> {}   /    BITHUMB :  {} -> BTC'.format(coin,coin))
-            print('\tPREM RATIO: ', (polo_bot.buy_price / bith_bot.tarbtc_sell_price - 1)*100, ' %')
+            print('\tPREM RATIO: ', (bith_bot.tarbtc_sell_price / polo_bot.buy_price  )*100, ' %')
             prem = 1
-        if(polo_bot.sell_price * (1-commision-threshold) < bith_bot.tarbtc_buy_price): # Each market threshold need comission
+        if(polo_bot.sell_price * (1-commision-threshold) > bith_bot.tarbtc_buy_price): # Each market threshold need comission
             #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             print('#################### PREMIUM ALERT ####################\a')
             print()
             print('\tPOLO : {} -> BTC   /    BITHUMB :  BTC -> {}'.format(coin,coin))
-            print('\tPREM RATIO: ', (bith_bot.tarbtc_buy_price  / polo_bot.sell_price - 1)*100, ' %') # Can be minus though..
+            print('\tPREM RATIO: ', (polo_bot.sell_price / bith_bot.tarbtc_buy_price - 1)*100, ' %')
             prem = -1
         print()
     if count%10 == 0:
@@ -357,7 +357,7 @@ class wallet:
         return total_btc
 
     def tar_polo_buy_btc_sell(self):
-        btc_needed = amount / (polo_bot.buy_price * (1+commision))
+        btc_needed = amount * (polo_bot.buy_price * (1+commision))
 
         if (self.btc_polo < btc_needed  ):
             # Not enough money to buy coin
@@ -368,7 +368,7 @@ class wallet:
             return True
 
     def tar_polo_sell_btc_buy(self):
-        btc_earned = amount / (polo_bot.sell_price * (1-commision))
+        btc_earned = amount * (polo_bot.sell_price * (1-commision))
 
         if (self.tar_polo < amount):
             return False
@@ -378,32 +378,33 @@ class wallet:
             return True
 
     def tar_bith_sell_buy_btc(self):
-        krw_earned = amount * bith_bot.tarkrw_sell_price #tarkrw
+        #krw_earned = amount * bith_bot.tarkrw_sell_price #tarkrw
 
         if (self.tar_bith < amount):
             return False
         else:
-            self.bith_krw += krw_earned
+            #self.bith_krw += krw_earned
             self.tar_bith -= amount
 
-        btc_earned = krw_earned / bith_bot.btckrw_sell_price
+        #btc_earned = krw_earned / bith_bot.btckrw_sell_price
+        btc_earned = amount * bith_bot.tarbtc_sell_price
+        #self.bith_krw -= krw_earned
 
-        self.bith_krw -= krw_earned
         self.btc_bith -= btc_earned
         return True
 
     # TODO brain teasing. later
     def btc_bith_sell_tar_buy(self): # BTC -> KRW
-        krw_needed = amount * bith_bot.tarkrw_buy_price
-        btc_tosell = krw_needed / bith_bot.btckrw_buy_price
+        #krw_needed = amount * bith_bot.tarkrw_buy_price
+        btc_tosell = amount * bith_bot.tarbtc_buy_price  #krw_needed / bith_bot.btckrw_buy_price
 
         if (self.btc_bith < btc_tosell):
             return False
         else:
             self.btc_bith -= btc_tosell
-            self.bith_krw += krw_needed
+            #self.bith_krw += krw_needed
 
-        self.bith_krw -= krw_needed
+        #self.bith_krw -= krw_needed
         self.tar_bith += amount
         return True
 
@@ -440,12 +441,12 @@ class wallet:
 
     def arbitrage(self, prem_alert):
         if prem_alert == 1:
-            if (self.polo_sell_bith_buy()):
+            if (self.bith_sell_polo_buy()):
                 self.prem_pos += 1
             else:
                 self.prem_pos_failed += 1
         elif prem_alert == -1:
-            if (self.bith_sell_polo_buy()):
+            if (self.polo_sell_bith_buy()):
                 self.prem_neg += 1
             else:
                 self.prem_neg_failed += 1
@@ -479,7 +480,6 @@ while(True):
 
     collect_price(count)
     prem_alert = calculate_premium(count)
-
 
     if prem_alert: # Prem alerted previously
         my_wallet.arbitrage(prem_alert)
