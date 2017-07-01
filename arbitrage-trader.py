@@ -461,27 +461,27 @@ class wallet:
     def __init__(self,coin):
         r = 10
         self.btc_polo = 0.1 *r # 3,360,000
-        self.btc_bith = 0.1 *r# 3,360,000
-        self.bith_krw = 200000*r
+        self.btc_krx = 0.1 *r# 3,360,000
+        self.krw_krx = 200000*r
 
         if coin == 'XRP':
             self.alt_polo = 100*r #360
-            self.alt_bith = 100*r
+            self.alt_krx = 100*r
         elif coin == 'ETH':
             self.alt_polo = 1*r
-            self.alt_bith = 1*r # 400,000
+            self.alt_krx = 1*r # 400,000
         elif coin == 'ETC':
             self.alt_polo = 15*r
-            self.alt_bith = 15*r#26,000
+            self.alt_krx = 15*r#26,000
         elif coin == 'LTC':
             self.alt_polo = 6*r
-            self.alt_bith = 6*r # 55,800
+            self.alt_krx = 6*r # 55,800
         elif coin == 'DASH':
             self.alt_polo = 1.5*r
-            self.alt_bith = 1.5*r #230,000
+            self.alt_krx = 1.5*r #230,000
 
-        self.btc_init = self.btc_polo + self.btc_bith
-        self.alt_init = self.alt_polo + self.alt_bith
+        self.btc_init = self.btc_polo + self.btc_krx
+        self.alt_init = self.alt_polo + self.alt_krx
         self.btcsum_init = self.asset_in_btc()
         self.btc_ratio = 1
         self.alt_ratio = 1
@@ -493,7 +493,7 @@ class wallet:
         self.reallo = 0
 
         self.polo_trade_amount = 0 # in BTC
-        self.bithum_trade_amount = 0# in KRW
+        self.krx_trade_amount = 0# in KRW
 
 
     def show_asset(self):
@@ -502,13 +502,13 @@ class wallet:
         print('\t{} : {}'.format('BTC',self.btc_polo))
         print('\t{} : {}'.format(coin, self.alt_polo))
         print('\t',market_kor)
-        print('\t{} : {}'.format('BTC',self.btc_bith))
-        print('\t{} : {}'.format(coin,self.alt_bith))
-        print('\t{} : {}'.format('KRW',self.bith_krw))
+        print('\t{} : {}'.format('BTC',self.btc_krx))
+        print('\t{} : {}'.format(coin,self.alt_krx))
+        print('\t{} : {}'.format('KRW',self.krw_krx))
         btcsum = self.asset_in_btc()
         print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, btcsum/self.btcsum_init))
-        self.btc_ratio = (self.btc_polo + self.btc_bith)/self.btc_init
-        self.alt_ratio = (self.alt_polo + self.alt_bith)/self.alt_init
+        self.btc_ratio = (self.btc_polo + self.btc_krx)/self.btc_init
+        self.alt_ratio = (self.alt_polo + self.alt_krx)/self.alt_init
         print('\tCoin ratio : BTC : {}\t {} : {}'.format(self.btc_ratio, coin, self.alt_ratio))
         print('\tArbitrage: +1 ({},{})\t -1 ({},{})\t Reallocate: {}\t'
                 .format(self.prem_pos, self.prem_pos_failed, self.prem_neg, self.prem_neg_failed, self.reallo))
@@ -516,10 +516,9 @@ class wallet:
         print()
 
     def asset_in_btc(self):
-        total_btc = self.btc_polo + self.btc_bith + (self.alt_polo + self.alt_bith) * (polo_bot.sell_price * (1 - commision_polo))
+        total_btc = self.btc_polo + self.btc_krx + (self.alt_polo + self.alt_krx) * (polo_bot.sell_price * (1 - commision_polo))
         return total_btc
 
-    # TODO change bith --> kormarket
     def alt_polo_buy_btc_sell(self):
         btc_needed = amount * (polo_bot.buy_price * (1 + commision_polo))
 
@@ -541,42 +540,42 @@ class wallet:
             self.alt_polo -= amount
             return True
 
-    def alt_bith_sell_buy_btc(self):
+    def alt_krx_sell_buy_btc(self):
         #krw_earned = amount * kor_bot.altkrw_sell_price #altkrw
 
-        if (self.alt_bith < amount):
+        if (self.alt_krx < amount):
             return False
         else:
-            #self.bith_krw += krw_earned
-            self.alt_bith -= amount
+            #self.krw_krx += krw_earned
+            self.alt_krx -= amount
 
         #btc_earned = krw_earned / kor_bot.btckrw_sell_price
         btc_earned = amount * kor_bot.altbtc_sell_price
-        #self.bith_krw -= krw_earned
+        #self.krw_krx -= krw_earned
 
-        self.btc_bith += btc_earned
+        self.btc_krx += btc_earned
         return True
 
     # TODO brain teasing. later
-    def btc_bith_sell_alt_buy(self): # BTC -> KRW
+    def btc_krx_sell_alt_buy(self): # BTC -> KRW
         #krw_needed = amount * kor_bot.altkrw_buy_price
         btc_tosell = amount * kor_bot.altbtc_buy_price  #krw_needed / kor_bot.btckrw_buy_price
 
-        if (self.btc_bith < btc_tosell):
+        if (self.btc_krx < btc_tosell):
             return False
         else:
-            self.btc_bith -= btc_tosell
-            #self.bith_krw += krw_needed
+            self.btc_krx -= btc_tosell
+            #self.krw_krx += krw_needed
 
-        #self.bith_krw -= krw_needed
-        self.alt_bith += amount
+        #self.krw_krx -= krw_needed
+        self.alt_krx += amount
         return True
 
 
 
     # BITHUMB api slower -> do first
-    def bith_sell_polo_buy(self):
-        if (self.alt_bith_sell_buy_btc()): # TAR->BTC
+    def krx_sell_polo_buy(self):
+        if (self.alt_krx_sell_buy_btc()): # TAR->BTC
             print("BITH :",coin,"-> BTC")
         else:
             print("BITH :",coin,"-> BTC : FAILED!!!!")
@@ -589,13 +588,13 @@ class wallet:
         return False
 
 
-    def polo_sell_bith_buy(self): #1
+    def polo_sell_krx_buy(self): #1
         if (self.alt_polo_sell_btc_buy()): # TAR->BTC
             print("POLO :",coin,"-> BTC")
         else:
             print("POLO :",coin,"-> BTC : FAILED!!!!")
 
-        if (self.btc_bith_sell_alt_buy()): # BTC->TAR# TODO  Order matters??
+        if (self.btc_krx_sell_alt_buy()): # BTC->TAR# TODO  Order matters??
             print("BITH : BTC ->", coin)
             return True
         else:
@@ -605,23 +604,23 @@ class wallet:
 
     def arbitrage(self, prem_alert):
         if prem_alert == 1:
-            if (self.bith_sell_polo_buy()):
+            if (self.krx_sell_polo_buy()):
                 self.prem_pos += 1
             else:
                 self.prem_pos_failed += 1
         elif prem_alert == -1:
-            if (self.polo_sell_bith_buy()):
+            if (self.polo_sell_krx_buy()):
                 self.prem_neg += 1
             else:
                 self.prem_neg_failed += 1
 
     def asset_reallocate(self):
-        btc = self.btc_polo + self.btc_bith
-        alt = self.alt_polo + self.alt_bith
+        btc = self.btc_polo + self.btc_krx
+        alt = self.alt_polo + self.alt_krx
         self.btc_polo = btc/2
-        self.btc_bith = btc/2
+        self.btc_krx = btc/2
         self.alt_polo = alt/2
-        self.alt_bith = alt/2
+        self.alt_krx = alt/2
         self.reallo += 1
 
 
