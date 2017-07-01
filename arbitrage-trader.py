@@ -83,8 +83,20 @@ polo_coin = 'BTC_'+coin
 pform = pform_dict[coin]
 
 threshold = 0.01 # 0.01
-commision = 0.0025 # Polo
+# commision for takers
+commision_polo = 0.0025 # Polo
+
 commision_coinone = 0.0011 #Lv3
+commision_bithumb = 0
+commision_korbit  = 0.0020
+
+commision_kor = 0
+if market_kor == 'BITHUMB':
+    commision_kor = commision_bithumb
+elif market_kor == 'COINONE':
+    commision_kor = commision_coinone
+if market_kor == 'BITHUMB':
+    commision_kor = commision_korbit
 
 # POLO
 # Maker   Taker   Trade Volume (trailing 30 day avg)
@@ -378,14 +390,14 @@ def calculate_premium(count):
     print()
     prem = 0
     if(ema_pred(ema_pred_flag)):
-        if(kor_bot.tarbtc_sell_price > polo_bot.buy_price * (1+commision+threshold)): # TODO Threshold : ratio? or delta?
+        if(kor_bot.tarbtc_sell_price > polo_bot.buy_price * (1 + commision_polo + threshold)): # TODO Threshold : ratio? or delta?
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             print('#################### PREMIUM ALERT ####################\a')
             print()
             print('\tPOLO : BTC -> {}   /    {} :  {} -> BTC'.format(coin,market_kor,coin))
             print('\tPREM RATIO: ', (kor_bot.tarbtc_sell_price / polo_bot.buy_price -1 )*100, ' %')
             prem = 1
-        if(polo_bot.sell_price * (1-commision-threshold) > kor_bot.tarbtc_buy_price): # Each market threshold need comission
+        if(polo_bot.sell_price * (1 - commision_polo - threshold) > kor_bot.tarbtc_buy_price): # Each market threshold need comission
             #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             print('#################### PREMIUM ALERT ####################\a')
             print()
@@ -470,11 +482,12 @@ class wallet:
         print()
 
     def asset_in_btc(self):
-        total_btc = self.btc_polo + self.btc_bith + (self.tar_polo + self.tar_bith) * (polo_bot.sell_price * (1-commision))
+        total_btc = self.btc_polo + self.btc_bith + (self.tar_polo + self.tar_bith) * (polo_bot.sell_price * (1 - commision_polo))
         return total_btc
 
+    # TODO change bith --> kormarket
     def tar_polo_buy_btc_sell(self):
-        btc_needed = amount * (polo_bot.buy_price * (1+commision))
+        btc_needed = amount * (polo_bot.buy_price * (1 + commision_polo))
 
         if (self.btc_polo < btc_needed  ):
             # Not enough money to buy coin
@@ -485,7 +498,7 @@ class wallet:
             return True
 
     def tar_polo_sell_btc_buy(self):
-        btc_earned = amount * (polo_bot.sell_price * (1-commision))
+        btc_earned = amount * (polo_bot.sell_price * (1 - commision_polo))
 
         if (self.tar_polo < amount):
             return False
@@ -591,27 +604,9 @@ my_wallet = wallet(coin)
 my_wallet.show_asset()
 
 # TODO EMA visualize
-while(True):
-    iter_start = time.time()
 
-    #if (not kor_bot.collect_price()):
-    #    iter_duration = time.time() - iter_start
-    #    count+=1
-    #    tsleep = max([update_period-iter_duration, 0])
-    #    time.sleep(tsleep)
-    #    iter_end = time.time()
-    #    print('time step : '+ str(iter_end - iter_start))
-    #    iter_start = iter_end
-    #    continue
-    kor_bot.collect_price()
-    polo_bot.collect_price()
-    prem_alert = calculate_premium(count)
 
-    if prem_alert: # Prem alerted previously
-        my_wallet.arbitrage(prem_alert)
-        my_wallet.show_asset()
-        prem_alert = 0
-
+def wait(iter_start):
     iter_duration = time.time() - iter_start
     count+=1
     tsleep = max([update_period-iter_duration, 0])
@@ -619,5 +614,26 @@ while(True):
     iter_end = time.time()
     print('time step : '+ str(iter_end - iter_start))
     iter_start = iter_end
-    if count % 30 == 0 :
+end
+
+while(True):
+    iter_start = time.time()
+
+    try:
+        kor_bot.collect_price()
+        polo_bot.collect_price()
+    except Exception as e:
+        print(e)
+        print('waiting next iter')
+        wait(iter_start)
+
+    prem_alert = calculate_premium(count)
+
+    if prem_alert: # Prem alerted previously
+        my_wallet.arbitrage(prem_alert)
+        my_wallet.show_asset()
+        prem_alert = 0
+
+    if my_wallet.btc_ratio < 0.3: # or  count % 30 == 0 :
         my_wallet.asset_reallocate()
+    wait(iter_start)

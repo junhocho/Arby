@@ -77,13 +77,13 @@ class XCoinAPI:
 		curl_handle.setopt(pycurl.POSTFIELDS, str_data);
 
 		url = self.api_url + endpoint;
-		curl_handle.setopt(curl_handle.URL, url);
-		curl_handle.setopt(curl_handle.HTTPHEADER, ['Api-Key: ' + self.api_key, 'Api-Sign: ' + utf8_api_sign, 'Api-Nonce: ' + nonce]);
-		curl_handle.setopt(curl_handle.WRITEFUNCTION, self.body_callback);
-		curl_handle.perform();
+		#curl_handle.setopt(curl_handle.URL, url);
+		#curl_handle.setopt(curl_handle.HTTPHEADER, ['Api-Key: ' + self.api_key, 'Api-Sign: ' + utf8_api_sign, 'Api-Nonce: ' + nonce]);
+		#curl_handle.setopt(curl_handle.WRITEFUNCTION, self.body_callback);
+		#curl_handle.perform();
 
-		#response_code = curl_handle.getinfo(pycurl.RESPONSE_CODE); # Get http response status code.
+		##response_code = curl_handle.getinfo(pycurl.RESPONSE_CODE); # Get http response status code.
 
-		curl_handle.close();
+		#curl_handle.close();
 
 		return requests.get(url).json()#return (json.loads(self.contents.reads()));
