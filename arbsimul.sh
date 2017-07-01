@@ -2,7 +2,7 @@
 
 
 
-SESSION_NAME="COIN-Arbitrage"
+SESSION_NAME="BITHUMB"
 tmux has-session -t ${SESSION_NAME}
 
 

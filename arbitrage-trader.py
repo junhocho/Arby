@@ -21,6 +21,9 @@ coin = 'ETC'
 market_kor = 'BITHUMB'
 exp_name = '1'
 
+t_tx = 30*60
+r_tx = 3/4
+
 
 optLen = len(sys.argv)
 
@@ -97,7 +100,7 @@ amount_dict = {
         "LTC": 3.0,
         "DASH": 0.6,
         "ETC": 3.0,
-        "XRP": 300
+        "XRP": 100
         }
 
 threshold_dict = {
@@ -120,7 +123,7 @@ polo_coin = 'BTC_'+coin
 pform = pform_dict[coin]
 
 # Threshold for gap price
-threshold = 0.01 # 0.01
+threshold = 0.001 # 0.01
 
 # commision for takers
 commision_polo = 0.0025 # Polo
@@ -136,6 +139,10 @@ elif market_kor == 'COINONE':
     commision_kor = commision_coinone
 if market_kor == 'BITHUMB':
     commision_kor = commision_korbit
+
+
+commision_polo2krx = 0.0001
+commision_krx2polo = 0.0005
 
 # POLO
 # Maker   Taker   Trade Volume (trailing 30 day avg)
@@ -442,7 +449,7 @@ def calculate_premium(count):
         curr = float(usdkrw.get_ask())
         ret = urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
         btcusd = json.loads(ret.read())['result']['price']
-        print("BTC premeium KRW/USD : ",str((kor_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
+        print("\tBTC premeium KRW/USD : ",str((kor_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
     return prem
 
 #################################################
@@ -462,6 +469,7 @@ class wallet:
         r = 10
         self.btc_polo = 0.1 *r # 3,360,000
         self.btc_krx = 0.1 *r# 3,360,000
+        self.btc_depo_delayed = 0
         self.krw_krx = 200000*r
 
         if coin == 'XRP':
@@ -492,8 +500,12 @@ class wallet:
         self.prem_neg_failed = 0
         self.reallo = 0
 
-        self.polo_trade_amount = 0 # in BTC
-        self.krx_trade_amount = 0# in KRW
+
+        self.polo_btc_trade_amount = 0 # in BTC
+        self.krx_krw_trade_amount = 0 # in KRW
+
+        self.polo_with_amount = 0 # Daily withdrawal limit ~10BTC ($25,000  USD equivalent)
+        self.krx_with_amount = 0 # Coinone 50 BTC
 
 
     def show_asset(self):
@@ -501,25 +513,28 @@ class wallet:
         print('\tPOLONIEX')
         print('\t{} : {}'.format('BTC',self.btc_polo))
         print('\t{} : {}'.format(coin, self.alt_polo))
+        print('\t{} : {}'.format('BTC in transact', self.btc_depo_delayed))
         print('\t',market_kor)
         print('\t{} : {}'.format('BTC',self.btc_krx))
         print('\t{} : {}'.format(coin,self.alt_krx))
         print('\t{} : {}'.format('KRW',self.krw_krx))
         btcsum = self.asset_in_btc()
         print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, btcsum/self.btcsum_init))
-        self.btc_ratio = (self.btc_polo + self.btc_krx)/self.btc_init
+        self.btc_ratio = (self.btc_depo_delayed + self.btc_polo + self.btc_krx)/self.btc_init
         self.alt_ratio = (self.alt_polo + self.alt_krx)/self.alt_init
         print('\tCoin ratio : BTC : {}\t {} : {}'.format(self.btc_ratio, coin, self.alt_ratio))
-        print('\tArbitrage: +1 ({},{})\t -1 ({},{})\t Reallocate: {}\t'
+        print('\tArbitrage : +1 ({},{})\t -1 ({},{})\t Reallocate: {}\t'
                 .format(self.prem_pos, self.prem_pos_failed, self.prem_neg, self.prem_neg_failed, self.reallo))
+        print('\tTrade amount : POLO : {} BTC\t {} : {} KRW'.format(self.polo_btc_trade_amount, market_kor, self.krx_krw_trade_amount))
+        print('\tTransaction amount : POLO {} BTC\t {} : {}'.format(self.polo_with_amount, market_kor, self.krx_with_amount))
         print('\t===================')
         print()
 
     def asset_in_btc(self):
-        total_btc = self.btc_polo + self.btc_krx + (self.alt_polo + self.alt_krx) * (polo_bot.sell_price * (1 - commision_polo))
+        total_btc = self.btc_depo_delayed + self.btc_polo + self.btc_krx + (self.alt_polo + self.alt_krx) * (polo_bot.sell_price * (1 - commision_polo))
         return total_btc
 
-    def alt_polo_buy_btc_sell(self):
+    def polo_btc2alt(self):
         btc_needed = amount * (polo_bot.buy_price * (1 + commision_polo))
 
         if (self.btc_polo < btc_needed  ):
@@ -528,9 +543,10 @@ class wallet:
         else:
             self.btc_polo -= btc_needed
             self.alt_polo += amount
+            self.polo_btc_trade_amount += btc_needed
             return True
 
-    def alt_polo_sell_btc_buy(self):
+    def polo_alt2btc(self):
         btc_earned = amount * (polo_bot.sell_price * (1 - commision_polo))
 
         if (self.alt_polo < amount):
@@ -538,10 +554,10 @@ class wallet:
         else:
             self.btc_polo += btc_earned
             self.alt_polo -= amount
+            self.polo_btc_trade_amount += btc_earned
             return True
 
-    def alt_krx_sell_buy_btc(self):
-        #krw_earned = amount * kor_bot.altkrw_sell_price #altkrw
+    def krx_alt2btc(self):
 
         if (self.alt_krx < amount):
             return False
@@ -554,11 +570,10 @@ class wallet:
         #self.krw_krx -= krw_earned
 
         self.btc_krx += btc_earned
+        self.krx_krw_trade_amount += amount * kor_bot.altkrw_sell_price
         return True
 
-    # TODO brain teasing. later
-    def btc_krx_sell_alt_buy(self): # BTC -> KRW
-        #krw_needed = amount * kor_bot.altkrw_buy_price
+    def krx_btc2alt(self): # BTC -> KRW
         btc_tosell = amount * kor_bot.altbtc_buy_price  #krw_needed / kor_bot.btckrw_buy_price
 
         if (self.btc_krx < btc_tosell):
@@ -569,37 +584,48 @@ class wallet:
 
         #self.krw_krx -= krw_needed
         self.alt_krx += amount
+        self.krx_krw_trade_amount += btc_tosell * kor_bot.btckrw_sell_price
         return True
 
 
+    ## TODO
+    ## It's important to check spending BTC first. If no BTC. Need Emergent Transfer!
+    ## If, i have enough BTC:
+    ##    First, ALT -> BTC.
+    ## then, BTC->ALT
+    ## Chekcout both ALT, BTC amount needed from my wallet for the operation.
+    ## Also need to check there are enough ask orders on exchange.
 
-    # BITHUMB api slower -> do first
     def krx_sell_polo_buy(self):
-        if (self.alt_krx_sell_buy_btc()): # TAR->BTC
-            print("BITH :",coin,"-> BTC")
+        if (self.polo_btc2alt()): # BTC->TAR
+            print("\tPOLO : BTC ->", coin)
         else:
-            print("BITH :",coin,"-> BTC : FAILED!!!!")
+            print("\tPOLO : BTC ->", coin, ": FAILED!!!!")
+            return False
 
-        if (self.alt_polo_buy_btc_sell()): # BTC->TAR
-            print("POLO : BTC ->", coin)
+        if (self.krx_alt2btc()): # TAR->BTC
+            print("\t{} : {} -> BTC".format(market_kor, coin))
             return True
         else:
-            print("POLO : BTC ->", coin, ": FAILED!!!!")
-        return False
+            print("\t{} : {} -> BTC : FAILED!!!!".format(market_kor, coin))
+            return False
+
 
 
     def polo_sell_krx_buy(self): #1
-        if (self.alt_polo_sell_btc_buy()): # TAR->BTC
-            print("POLO :",coin,"-> BTC")
+        if (self.krx_btc2alt()): # BTC->TAR# TODO  Order matters??
+            print("\t{} : BTC -> {}".format(market_kor, coin))
         else:
-            print("POLO :",coin,"-> BTC : FAILED!!!!")
+            print("\t{} : BTC -> {} : FAILED!!!!".format(market_kor, coin))
+            return False
 
-        if (self.btc_krx_sell_alt_buy()): # BTC->TAR# TODO  Order matters??
-            print("BITH : BTC ->", coin)
+        if (self.polo_alt2btc()): # TAR->BTC
+            print("\tPOLO : {} -> BTC".format(coin))
             return True
         else:
-            print("BITH : BTC ->", coin, ": FAILED!!!!")
-        return False
+            print("\tPOLO : {} -> BTC : FAILED!!!!".format(coin))
+            return False
+
 
 
     def arbitrage(self, prem_alert):
@@ -614,16 +640,38 @@ class wallet:
             else:
                 self.prem_neg_failed += 1
 
-    def asset_reallocate(self):
+    #def asset_reallocate(self): # Done instantly. Naive version.
+    #    btc = self.btc_polo + self.btc_krx
+    #    alt = self.alt_polo + self.alt_krx
+    #    self.btc_polo = btc/2
+    #    self.btc_krx = btc/2
+    #    self.alt_polo = alt/2
+    #    self.alt_krx = alt/2
+    #    self.reallo += 1
+
+    def transact_btc_start(self):
         btc = self.btc_polo + self.btc_krx
-        alt = self.alt_polo + self.alt_krx
-        self.btc_polo = btc/2
-        self.btc_krx = btc/2
-        self.alt_polo = alt/2
-        self.alt_krx = alt/2
-        self.reallo += 1
+        if self.btc_polo > self.btc_krx:
+            btc_with =  self.btc_polo - btc/2
+            self.btc_depo_delayed = btc_with - commision_polo2krx
 
+            self.btc_polo -= btc_with
+            self.polo_with_amount += btc_with
+            return 1 # polo -> krx
+        else:
+            btc_with =  self.btc_krx - btc/2
+            self.btc_depo_delayed = btc_with - commision_krx2polo
 
+            self.btc_krx -= btc_with
+            self.krx_with_amount += btc_with
+            return -1 # krx -> polo
+
+    def transact_btc_done(self,tx_method):
+        if tx_method == 1:# polo -> krx
+            self.btc_krx += self.btc_depo_delayed
+        elif tx_method == -1:# krx -> polo
+            self.btc_polo += self.btc_depo_delayed
+        self.btc_depo_delayed = 0
 
 #################################################
 
@@ -655,7 +703,6 @@ def wait(iter_s):
 
 
 time_arbstart = time.time()
-
 while(True):
     time_taken = (time.time() - time_arbstart)/60
     print("{} {} {:6} {:6.0f}m {:10.4f}\t  {}".format(market_kor, coin, iter_arb, time_taken , my_wallet.btc_ratio ,datetime.now()))
@@ -673,12 +720,26 @@ while(True):
         continue
 
     prem_alert = calculate_premium(iter_arb)
+    #prem_alert = -1
 
-    if prem_alert: # Prem alerted previously
+    if prem_alert == 1 or prem_alert == -1: # Prem alerted previously
         my_wallet.arbitrage(prem_alert)
         my_wallet.show_asset()
         prem_alert = 0
 
-    if my_wallet.btc_ratio < 0.3: # or  count % 30 == 0 :
-        my_wallet.asset_reallocate()
+    if my_wallet.btc_depo_delayed > 0: # In tx
+        #print(time.time() - t_with , "waiting depo...")
+        if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
+            my_wallet.transact_btc_done(tx_method)
+            print("Transact Done!")
+            my_wallet.reallo += 1
+            my_wallet.show_asset()
+    elif my_wallet.btc_depo_delayed == 0: # Not in tx
+        if my_wallet.btc_polo / my_wallet.btc_krx < r_tx or my_wallet.btc_polo / my_wallet.btc_krx > 1/r_tx: # or  count % 30 == 0 :
+        #if my_wallet.btc_polo / my_wallet.btc_krx != 1:
+            tx_method = my_wallet.transact_btc_start()
+            t_with = time.time()
+            print("Starting Transaction!")
+            my_wallet.show_asset()
+
     wait(iter_s)
