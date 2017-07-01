@@ -15,26 +15,69 @@ import time
 from datetime import datetime
 # from noti.slack import SlackLogger
 from poloniex import *
-
-import logging
-
-coin = sys.argv[1]
-#market_kor = 'BITHUMB'
-#market_kor = 'COINONE'
-market_kor = 'KORBIT'
-logging.basicConfig(filename='./'+coin+'.log',level=logging.DEBUG)
-
-
 from yahoo_finance import Currency
 
+coin = 'ETC'
+market_kor = 'BITHUMB'
+exp_name = '1'
 
-ema_pred_flag = 0
 
-def ema_pred(flag):
-    if flag:
-        return (ema_grad > 0  and count>60) # TODO default count 60
-    else:
-        return True
+optLen = len(sys.argv)
+
+if optLen == 2:
+    coin = sys.argv[1]
+elif optLen == 3:
+    coin = sys.argv[1]
+    market_kor = sys.argv[2]
+elif optLen == 4:
+    coin = sys.argv[1]
+    market_kor = sys.argv[2]
+    exp_name = sys.argv[3]
+
+# Setup Logger
+
+import logging
+import logging.handlers
+
+logger = logging.getLogger('crumbs')
+logger.setLevel(logging.DEBUG)
+
+
+#formatter
+formatter = logging.Formatter('[%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s > %(message)s')
+
+
+# fileHandler and StreamHandler
+fileHandler = logging.FileHandler('./log/loghandler.log')
+streamHandler = logging.StreamHandler()
+
+# handler formatter
+fileHandler.setFormatter(formatter)
+streamHandler.setFormatter(formatter)
+
+# handler logging add
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
+# logging
+#logger.debug('debug')
+#logger.debug('info')
+#logger.debug('warning')
+#logger.debug('error')
+#logger.debug('critical')
+
+
+
+#
+#
+#ema_pred_flag = 0
+#
+#def ema_pred(flag):
+#    if flag:
+#        return (ema_grad > 0  and count>60) # TODO default count 60
+#    else:
+#        return True
+
 
 b_api_key = os.environ["BITHUMB_API_KEY"]
 b_api_secret = os.environ["BITHUMB_API_SECRET"]
@@ -73,16 +116,12 @@ pform_dict = {'ETH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
         'ETC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
         'XRP' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}'}
 
-#if len(sys.argv) < 2 or (sys.argv[1] not in coin_dict):
-#    print("enter valid coin")
-#    sys.exit(1)
-#coin = sys.argv[1]
-#polo_coin = sys.argv[2]
-
 polo_coin = 'BTC_'+coin
 pform = pform_dict[coin]
 
+# Threshold for gap price
 threshold = 0.01 # 0.01
+
 # commision for takers
 commision_polo = 0.0025 # Polo
 
@@ -196,13 +235,13 @@ class coinone_bot:
         self.sell_price = None
         self.btckrw_buy_price = None
         self.btckrw_sell_price = None
-        self.tarkrw_buy_price = None
-        self.tarkrw_sell_price = None
+        self.altkrw_buy_price = None
+        self.altkrw_sell_price = None
 
     def collect_price(self):
         try:
             btc_orderbook = requests.get('https://api.coinone.co.kr/orderbook/?currency=btc').json()
-            target_orderbook  = requests.get('https://api.coinone.co.kr/orderbook/?currency='+coin).json()
+            alt_orderbook  = requests.get('https://api.coinone.co.kr/orderbook/?currency='+coin).json()
             orderbook_loaded = True
         except Exception as e:
             print("Orderbook not loaded")
@@ -219,19 +258,19 @@ class coinone_bot:
 
 
         count = 0
-        while(float(target_orderbook["ask"][count]["qty"])<amount):
+        while(float(alt_orderbook["ask"][count]["qty"])<amount):
             count+=1
-        self.tarkrw_buy_price = float(target_orderbook["ask"][count]["price"])
+        self.altkrw_buy_price = float(alt_orderbook["ask"][count]["price"])
 
         # BTC sell -> TAR buy
-        self.tarbtc_buy_price = self.tarkrw_buy_price/self.btckrw_sell_price
+        self.altbtc_buy_price = self.altkrw_buy_price/self.btckrw_sell_price
 
         count = 0
-        while(float(target_orderbook["bid"][count]["qty"])<amount):
+        while(float(alt_orderbook["bid"][count]["qty"])<amount):
             count+=1
-        self.tarkrw_sell_price = float(target_orderbook["bid"][count]["price"])
+        self.altkrw_sell_price = float(alt_orderbook["bid"][count]["price"])
         # BTC buy -> TAR sell
-        self.tarbtc_sell_price = self.tarkrw_sell_price/self.btckrw_buy_price
+        self.altbtc_sell_price = self.altkrw_sell_price/self.btckrw_buy_price
 
 class korbit_bot:
     def __init__(self):
@@ -240,13 +279,13 @@ class korbit_bot:
         self.sell_price = None
         self.btckrw_buy_price = None
         self.btckrw_sell_price = None
-        self.tarkrw_buy_price = None
-        self.tarkrw_sell_price = None
+        self.altkrw_buy_price = None
+        self.altkrw_sell_price = None
 
     def collect_price(self):
         #try:
         btc_orderbook = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair=btc_krw').json()
-        target_orderbook  = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair='+coin.lower()+'_krw').json()
+        alt_orderbook  = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair='+coin.lower()+'_krw').json()
         #orderbook_loaded = True
         #    print("Orderbook loaded")
         #except Exception as e:
@@ -260,19 +299,19 @@ class korbit_bot:
 
 
         count = 0
-        while(float(target_orderbook["asks"][count][1])<amount): # quantity
+        while(float(alt_orderbook["asks"][count][1])<amount): # quantity
             count+=1
-        self.tarkrw_buy_price = float(target_orderbook["asks"][count][0])
+        self.altkrw_buy_price = float(alt_orderbook["asks"][count][0])
 
         # BTC sell -> TAR buy
-        self.tarbtc_buy_price = self.tarkrw_buy_price/self.btckrw_sell_price
+        self.altbtc_buy_price = self.altkrw_buy_price/self.btckrw_sell_price
 
         count = 0
-        while(float(target_orderbook["bids"][count][1])<amount):
+        while(float(alt_orderbook["bids"][count][1])<amount):
             count+=1
-        self.tarkrw_sell_price = float(target_orderbook["bids"][count][0])
+        self.altkrw_sell_price = float(alt_orderbook["bids"][count][0])
         # BTC buy -> TAR sell
-        self.tarbtc_sell_price = self.tarkrw_sell_price/self.btckrw_buy_price
+        self.altbtc_sell_price = self.altkrw_sell_price/self.btckrw_buy_price
 
 
 class bithumb_bot:
@@ -282,8 +321,8 @@ class bithumb_bot:
         self.sell_price = None
         self.btckrw_buy_price = None
         self.btckrw_sell_price = None
-        self.tarkrw_buy_price = None
-        self.tarkrw_sell_price = None
+        self.altkrw_buy_price = None
+        self.altkrw_sell_price = None
 
     def collect_price(self):
         btc_orderbook = b_api.xcoinApiCall("/public/orderbook/BTC", {})
@@ -297,31 +336,25 @@ class bithumb_bot:
         self.btckrw_sell_price = float(btc_orderbook["data"]["bids"][0]["price"])
 #         print(self.btckrw_sell_price)
 
-        target_orderbook = b_api.xcoinApiCall("/public/orderbook/" + coin, {})
+        alt_orderbook = b_api.xcoinApiCall("/public/orderbook/" + coin, {})
 
         count = 0
-        while(float(target_orderbook["data"]["asks"][count]["quantity"])<amount):
+        while(float(alt_orderbook["data"]["asks"][count]["quantity"])<amount):
             count+=1
 #         print(count)
-        self.tarkrw_buy_price = float(target_orderbook["data"]["asks"][count]["price"])
-#         print(tarkrw_buy_price)
+        self.altkrw_buy_price = float(alt_orderbook["data"]["asks"][count]["price"])
+#         print(altkrw_buy_price)
         # BTC sell -> TAR buy
-        self.tarbtc_buy_price = self.tarkrw_buy_price/self.btckrw_sell_price
+        self.altbtc_buy_price = self.altkrw_buy_price/self.btckrw_sell_price
 
         count = 0
-        while(float(target_orderbook["data"]["bids"][count]["quantity"])<amount):
+        while(float(alt_orderbook["data"]["bids"][count]["quantity"])<amount):
             count+=1
 #         print(count)
-        self.tarkrw_sell_price = float(target_orderbook["data"]["bids"][count]["price"])
+        self.altkrw_sell_price = float(alt_orderbook["data"]["bids"][count]["price"])
         # BTC buy -> TAR sell
-        self.tarbtc_sell_price = self.tarkrw_sell_price/self.btckrw_buy_price
-#         print(tarkrw_sell_price)
+        self.altbtc_sell_price = self.altkrw_sell_price/self.btckrw_buy_price
 
-#         print(self.tarbtc_buy_price)
-#         print(self.tarbtc_sell_price)
-#         print(target_orderbook)
-
-#         print(pform.format('BITHUMB',self.tarbtc_buy_price, self.tarbtc_sell_price))
 
 # ======= POLO
 class poloniex_bot:
@@ -348,14 +381,8 @@ class poloniex_bot:
 
         self.sell_price = float(self.orderbook["bids"][count][0])
         self.sell_order = count
-#         print(pform.format('POLONIEX',self.buy_price, self.sell_price))
-#         print(self.buy_price)
-#         print(self.sell_price)
 
 
-
-#kor_bot = bithumb_bot()
-#coin_bot = coinone_bot()
 
 if market_kor == 'COINONE':
     kor_bot = coinone_bot()
@@ -366,45 +393,50 @@ elif market_kor == 'KORBIT':
 polo_bot = poloniex_bot()
 
 def calculate_premium(count):
-    global ema
-    global ema_grad
-    global time_ema
-    ##################################################
-    closing_price = (polo_bot.sell_price + polo_bot.buy_price)/2
-    if(count is 0):
-        ema = closing_price
-        ema_grad = 0.0
-    else:
-        ema_grad = (closing_price - ema) * multiplier(time_ema)
-        ema = (closing_price - ema) * multiplier(time_ema) + ema
-    ######################## PRINT ########################
-    print('---------------------------------------------------')
-    print()
-    print(str(count)+" ema_grad :", ema_grad ," [" + coin + "] " + str(datetime.now()))
+
+    #global ema
+    #global ema_grad
+    #global time_ema
+    ################## EMA not needed ######################
+    #closing_price = (polo_bot.sell_price + polo_bot.buy_price)/2
+    #if(count is 0):
+    #    ema = closing_price
+    #    ema_grad = 0.0
+    #else:
+    #    ema_grad = (closing_price - ema) * multiplier(time_ema)
+    #    ema = (closing_price - ema) * multiplier(time_ema) + ema
+
+
+    ##### START
+    #print('---------------------------------------------------')
+    #print()
+
+
     # 	print('BITHUMB :  \tBUY: ', b_buy_price, '\tSELL: ', b_sell_price, '\t|')
     # 	print('POLO :   \tBUY: ', p_buy_price, '\tSELL: ', p_sell_price, '\t|')
-    print(pform.format(market_kor, kor_bot.tarbtc_buy_price, kor_bot.tarbtc_sell_price))
-    print(pform.format('POLONIEX', polo_bot.buy_price, polo_bot.sell_price))
-    print("Pemium monitoring: POLO : BTC->{} | BITH : {}->BTC : {:5.2f}".format(coin, coin,(kor_bot.tarbtc_sell_price / polo_bot.buy_price - 1)*100))
-    print("Pemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}".format(coin, coin, (polo_bot.sell_price / kor_bot.tarbtc_buy_price - 1)*100))
-    print()
+    #print(pform.format(market_kor, kor_bot.altbtc_buy_price, kor_bot.altbtc_sell_price))
+    #print(pform.format('POLONIEX', polo_bot.buy_price, polo_bot.sell_price))
+    #print("Pemium monitoring: POLO : BTC->{} | BITH : {}->BTC : {:5.2f}".format(coin, coin,(kor_bot.altbtc_sell_price / polo_bot.buy_price - 1)*100))
+    #print("Pemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}".format(coin, coin, (polo_bot.sell_price / kor_bot.altbtc_buy_price - 1)*100))
+    #print()
     prem = 0
-    if(ema_pred(ema_pred_flag)):
-        if(kor_bot.tarbtc_sell_price > polo_bot.buy_price * (1 + commision_polo + threshold)): # TODO Threshold : ratio? or delta?
-            #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
-            print('#################### PREMIUM ALERT ####################\a')
-            print()
-            print('\tPOLO : BTC -> {}   /    {} :  {} -> BTC'.format(coin,market_kor,coin))
-            print('\tPREM RATIO: ', (kor_bot.tarbtc_sell_price / polo_bot.buy_price -1 )*100, ' %')
-            prem = 1
-        if(polo_bot.sell_price * (1 - commision_polo - threshold) > kor_bot.tarbtc_buy_price): # Each market threshold need comission
-            #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
-            print('#################### PREMIUM ALERT ####################\a')
-            print()
-            print('\tPOLO : {} -> BTC   /    {} :  BTC -> {}'.format(coin,market_kor,coin))
-            print('\tPREM RATIO: ', (polo_bot.sell_price / kor_bot.tarbtc_buy_price - 1)*100, ' %')
-            prem = -1
-        print()
+
+    #####  Premium compare #####
+    if(kor_bot.altbtc_sell_price > polo_bot.buy_price * (1 + commision_polo + threshold)): # TODO Threshold : ratio? or delta?
+        #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
+        #print('#################### PREMIUM ALERT ####################\a')
+        #print()
+        print('\tPOLO : BTC -> {}   /    {} :  {} -> BTC'.format(coin,market_kor,coin))
+        print('\tPREM RATIO: ', (kor_bot.altbtc_sell_price / polo_bot.buy_price -1 )*100, ' %')
+        prem = 1
+    if(polo_bot.sell_price * (1 - commision_polo - threshold) > kor_bot.altbtc_buy_price): # Each market threshold need comission
+        #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
+        #print('#################### PREMIUM ALERT ####################\a')
+        #print()
+        print('\tPOLO : {} -> BTC   /    {} :  BTC -> {}'.format(coin,market_kor,coin))
+        print('\tPREM RATIO: ', (polo_bot.sell_price / kor_bot.altbtc_buy_price - 1)*100, ' %')
+        prem = -1
+    #print()
     if count%10 == 0:
         usdkrw = Currency('USDKRW')
         curr = float(usdkrw.get_ask())
@@ -433,24 +465,26 @@ class wallet:
         self.bith_krw = 200000*r
 
         if coin == 'XRP':
-            self.tar_polo = 100*r #360
-            self.tar_bith = 100*r
+            self.alt_polo = 100*r #360
+            self.alt_bith = 100*r
         elif coin == 'ETH':
-            self.tar_polo = 1*r
-            self.tar_bith = 1*r # 400,000
+            self.alt_polo = 1*r
+            self.alt_bith = 1*r # 400,000
         elif coin == 'ETC':
-            self.tar_polo = 15*r
-            self.tar_bith = 15*r#26,000
+            self.alt_polo = 15*r
+            self.alt_bith = 15*r#26,000
         elif coin == 'LTC':
-            self.tar_polo = 6*r
-            self.tar_bith = 6*r # 55,800
+            self.alt_polo = 6*r
+            self.alt_bith = 6*r # 55,800
         elif coin == 'DASH':
-            self.tar_polo = 1.5*r
-            self.tar_bith = 1.5*r #230,000
+            self.alt_polo = 1.5*r
+            self.alt_bith = 1.5*r #230,000
 
         self.btc_init = self.btc_polo + self.btc_bith
-        self.tar_init = self.tar_polo + self.tar_bith
+        self.alt_init = self.alt_polo + self.alt_bith
         self.btcsum_init = self.asset_in_btc()
+        self.btc_ratio = 1
+        self.alt_ratio = 1
 
         self.prem_pos = 0
         self.prem_neg = 0
@@ -466,27 +500,27 @@ class wallet:
         print('\t==== My Wallet ====')
         print('\tPOLONIEX')
         print('\t{} : {}'.format('BTC',self.btc_polo))
-        print('\t{} : {}'.format(coin, self.tar_polo))
+        print('\t{} : {}'.format(coin, self.alt_polo))
         print('\t',market_kor)
         print('\t{} : {}'.format('BTC',self.btc_bith))
-        print('\t{} : {}'.format(coin,self.tar_bith))
+        print('\t{} : {}'.format(coin,self.alt_bith))
         print('\t{} : {}'.format('KRW',self.bith_krw))
         btcsum = self.asset_in_btc()
         print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, btcsum/self.btcsum_init))
-        btc_ratio = (self.btc_polo + self.btc_bith)/self.btc_init
-        tar_ratio = (self.tar_polo + self.tar_bith)/self.tar_init
-        print('\tCoin ratio : BTC : {}\t {} : {}'.format(btc_ratio, coin, tar_ratio))
+        self.btc_ratio = (self.btc_polo + self.btc_bith)/self.btc_init
+        self.alt_ratio = (self.alt_polo + self.alt_bith)/self.alt_init
+        print('\tCoin ratio : BTC : {}\t {} : {}'.format(self.btc_ratio, coin, self.alt_ratio))
         print('\tArbitrage: +1 ({},{})\t -1 ({},{})\t Reallocate: {}\t'
                 .format(self.prem_pos, self.prem_pos_failed, self.prem_neg, self.prem_neg_failed, self.reallo))
         print('\t===================')
         print()
 
     def asset_in_btc(self):
-        total_btc = self.btc_polo + self.btc_bith + (self.tar_polo + self.tar_bith) * (polo_bot.sell_price * (1 - commision_polo))
+        total_btc = self.btc_polo + self.btc_bith + (self.alt_polo + self.alt_bith) * (polo_bot.sell_price * (1 - commision_polo))
         return total_btc
 
     # TODO change bith --> kormarket
-    def tar_polo_buy_btc_sell(self):
+    def alt_polo_buy_btc_sell(self):
         btc_needed = amount * (polo_bot.buy_price * (1 + commision_polo))
 
         if (self.btc_polo < btc_needed  ):
@@ -494,39 +528,39 @@ class wallet:
             return False
         else:
             self.btc_polo -= btc_needed
-            self.tar_polo += amount
+            self.alt_polo += amount
             return True
 
-    def tar_polo_sell_btc_buy(self):
+    def alt_polo_sell_btc_buy(self):
         btc_earned = amount * (polo_bot.sell_price * (1 - commision_polo))
 
-        if (self.tar_polo < amount):
+        if (self.alt_polo < amount):
             return False
         else:
             self.btc_polo += btc_earned
-            self.tar_polo -= amount
+            self.alt_polo -= amount
             return True
 
-    def tar_bith_sell_buy_btc(self):
-        #krw_earned = amount * kor_bot.tarkrw_sell_price #tarkrw
+    def alt_bith_sell_buy_btc(self):
+        #krw_earned = amount * kor_bot.altkrw_sell_price #altkrw
 
-        if (self.tar_bith < amount):
+        if (self.alt_bith < amount):
             return False
         else:
             #self.bith_krw += krw_earned
-            self.tar_bith -= amount
+            self.alt_bith -= amount
 
         #btc_earned = krw_earned / kor_bot.btckrw_sell_price
-        btc_earned = amount * kor_bot.tarbtc_sell_price
+        btc_earned = amount * kor_bot.altbtc_sell_price
         #self.bith_krw -= krw_earned
 
         self.btc_bith += btc_earned
         return True
 
     # TODO brain teasing. later
-    def btc_bith_sell_tar_buy(self): # BTC -> KRW
-        #krw_needed = amount * kor_bot.tarkrw_buy_price
-        btc_tosell = amount * kor_bot.tarbtc_buy_price  #krw_needed / kor_bot.btckrw_buy_price
+    def btc_bith_sell_alt_buy(self): # BTC -> KRW
+        #krw_needed = amount * kor_bot.altkrw_buy_price
+        btc_tosell = amount * kor_bot.altbtc_buy_price  #krw_needed / kor_bot.btckrw_buy_price
 
         if (self.btc_bith < btc_tosell):
             return False
@@ -535,19 +569,19 @@ class wallet:
             #self.bith_krw += krw_needed
 
         #self.bith_krw -= krw_needed
-        self.tar_bith += amount
+        self.alt_bith += amount
         return True
 
 
 
     # BITHUMB api slower -> do first
     def bith_sell_polo_buy(self):
-        if (self.tar_bith_sell_buy_btc()): # TAR->BTC
+        if (self.alt_bith_sell_buy_btc()): # TAR->BTC
             print("BITH :",coin,"-> BTC")
         else:
             print("BITH :",coin,"-> BTC : FAILED!!!!")
 
-        if (self.tar_polo_buy_btc_sell()): # BTC->TAR
+        if (self.alt_polo_buy_btc_sell()): # BTC->TAR
             print("POLO : BTC ->", coin)
             return True
         else:
@@ -556,12 +590,12 @@ class wallet:
 
 
     def polo_sell_bith_buy(self): #1
-        if (self.tar_polo_sell_btc_buy()): # TAR->BTC
+        if (self.alt_polo_sell_btc_buy()): # TAR->BTC
             print("POLO :",coin,"-> BTC")
         else:
             print("POLO :",coin,"-> BTC : FAILED!!!!")
 
-        if (self.btc_bith_sell_tar_buy()): # BTC->TAR# TODO  Order matters??
+        if (self.btc_bith_sell_alt_buy()): # BTC->TAR# TODO  Order matters??
             print("BITH : BTC ->", coin)
             return True
         else:
@@ -583,20 +617,23 @@ class wallet:
 
     def asset_reallocate(self):
         btc = self.btc_polo + self.btc_bith
-        tar = self.tar_polo + self.tar_bith
+        alt = self.alt_polo + self.alt_bith
         self.btc_polo = btc/2
         self.btc_bith = btc/2
-        self.tar_polo = tar/2
-        self.tar_bith = tar/2
+        self.alt_polo = alt/2
+        self.alt_bith = alt/2
         self.reallo += 1
 
 
 
 #################################################
-count = 0
+
+
+### START arbitrage!!
+
+iter_arb = 0
 prem_alert = 0  # -1 | 0 | 1
 time.sleep(update_period)
-# count +=1
 
 
 polo_bot.collect_price()
@@ -606,28 +643,37 @@ my_wallet.show_asset()
 # TODO EMA visualize
 
 
-def wait(iter_start):
-    iter_duration = time.time() - iter_start
-    count+=1
+
+def wait(iter_s):
+    global iter_arb
+    iter_duration = time.time() - iter_s
+    iter_arb+=1
     tsleep = max([update_period-iter_duration, 0])
     time.sleep(tsleep)
     iter_end = time.time()
-    print('time step : '+ str(iter_end - iter_start))
-    iter_start = iter_end
-end
+    #print('time step : '+ str(iter_end - iter_s))
+    iter_s = iter_end
+
+
+time_arbstart = time.time()
 
 while(True):
-    iter_start = time.time()
+    time_taken = (time.time() - time_arbstart)/60
+    print("{} {} {:6} {:6.0f}m {:10.4f}\t  {}".format(market_kor, coin, iter_arb, time_taken , my_wallet.btc_ratio ,datetime.now()))
+    iter_s= time.time()
 
     try:
         kor_bot.collect_price()
         polo_bot.collect_price()
     except Exception as e:
-        print(e)
-        print('waiting next iter')
-        wait(iter_start)
+        #print(e)
+        #print('waiting next iter')
+        #logger.error( e);
+        logger.exception("waiting next iter")
+        wait(iter_s)
+        continue
 
-    prem_alert = calculate_premium(count)
+    prem_alert = calculate_premium(iter_arb)
 
     if prem_alert: # Prem alerted previously
         my_wallet.arbitrage(prem_alert)
@@ -636,4 +682,4 @@ while(True):
 
     if my_wallet.btc_ratio < 0.3: # or  count % 30 == 0 :
         my_wallet.asset_reallocate()
-    wait(iter_start)
+    wait(iter_s)
