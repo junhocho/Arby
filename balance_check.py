@@ -43,12 +43,12 @@ rgParams = {
 # /public/orderbook
 # /public/recent_transactions
 
-result = api.xcoinApiCall("/public/ticker", rgParams);
-#print(result)
-print("status: " + result["status"]);
-print("last: " + result["data"]["closing_price"]);
-print("sell: " + result["data"]["sell_price"]);
-print("buy: " + result["data"]["buy_price"]);
+#result = api.xcoinApiCall("/public/ticker", rgParams);
+##print(result)
+#print("status: " + result["status"]);
+#print("last: " + result["data"]["closing_price"]);
+#print("sell: " + result["data"]["sell_price"]);
+#print("buy: " + result["data"]["buy_price"]);
 
 
 #
@@ -60,24 +60,24 @@ print("buy: " + result["data"]["buy_price"]);
 # /info/balance
 # /info/wallet_address
 
-rgParams = {
-        "currency" : "LTC"
-        };
-result = api.xcoinApiCall("/info/account", rgParams);
+#rgParams = {
+#        "currency" : "LTC"
+#        };
+#result = api.xcoinApiCall("/info/account", rgParams);
 #print(result)
-print("status: " + result["status"]);
-print("created: " + result["data"]["created"]);
-print("account id: " + result["data"]["account_id"]);
-print("trade fee: " + result["data"]["trade_fee"]);
-print("balance: " + result["data"]["balance"]);
-
-
-## Wallet address
-rgParams = {
-        "currency" : "BTC"
-        };
-result = api.xcoinApiCall("/info/wallet_address", rgParams);
-#print(result)
+#print("status: " + result["status"]);
+#print("created: " + result["data"]["created"]);
+#print("account id: " + result["data"]["account_id"]);
+#print("trade fee: " + result["data"]["trade_fee"]);
+#print("balance: " + result["data"]["balance"]);
+#
+#
+### Wallet address
+#rgParams = {
+#        "currency" : "BTC"
+#        };
+#result = api.xcoinApiCall("/info/wallet_address", rgParams);
+##print(result)
 
 ## BALANCE
 print("==== Bith Balance ==== ")
@@ -88,6 +88,7 @@ for c in coins:
     rgParams = {
             "currency" : c};
     result = api.xcoinApiCall("/info/balance", rgParams);
+    #print(result)
     bith_balance[c] = result['data']['available_'+c.lower()]
     #print("{} :\t {}".format(c, result['data']['available_'+c.lower()]))
 bith_balance['KRW'] = result['data']['available_krw']
