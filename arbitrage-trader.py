@@ -14,8 +14,11 @@ import json
 import time
 from datetime import datetime
 # from noti.slack import SlackLogger
-from poloniex import *
+import poloniex
 from yahoo_finance import Currency
+
+
+import urllib.request
 
 coin = 'ETC'
 market_kor = 'BITHUMB'
@@ -91,7 +94,7 @@ p_api_secret = os.environ["POLONIEX_API_SECRET"]
 
 
 b_api = XCoinAPI(b_api_key, b_api_secret)
-p_api = poloniex(p_api_key, p_api_secret)
+p_api = poloniex.Poloniex(p_api_key, p_api_secret)
 ############### EMA INITIAL SETUP ##############
 
 # TODO : LTC amount
@@ -338,9 +341,9 @@ class bithumb_bot:
         self.altkrw_sell_price = None
 
     def collect_price(self):
-        btc_orderbook = b_api.xcoinApiCall("/public/orderbook/BTC", {})
-        #ret = urlopen(urllib.request.Request('https://api.bithumb.com/public/orderbook/BTC'))
-        #btc_orderbook = json.loads(ret.read())
+        #btc_orderbook = b_api.xcoinApiCall("/public/orderbook/BTC", {})
+        #ret = urlopen(urllib.request.Request())
+        btc_orderbook = requests.get('https://api.bithumb.com/public/orderbook/BTC').json() # json.loads(ret.read())
 
 
         # TODO : BTC amount limit??
@@ -349,7 +352,8 @@ class bithumb_bot:
         self.btckrw_sell_price = float(btc_orderbook["data"]["bids"][0]["price"])
 #         print(self.btckrw_sell_price)
 
-        alt_orderbook = b_api.xcoinApiCall("/public/orderbook/" + coin, {})
+        #alt_orderbook = b_api.xcoinApiCall("/public/orderbook/" + coin, {})
+        alt_orderbook = requests.get('https://api.bithumb.com/public/orderbook/'+coin).json() # json.loads(ret.read())
 
         count = 0
         while(float(alt_orderbook["data"]["asks"][count]["quantity"])<amount):
@@ -453,7 +457,7 @@ def calculate_premium(count):
     if count%100 == 0:
         usdkrw = Currency('USDKRW')
         curr = float(usdkrw.get_ask())
-        ret = urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
+        ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
         btcusd = json.loads(ret.read())['result']['price']
         print("\tBTC premeium KRW/USD : ",str((kor_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
     return prem
