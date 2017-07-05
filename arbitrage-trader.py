@@ -99,11 +99,12 @@ p_api = poloniex(p_api_key, p_api_secret)
 # TODO : Send LTC instead of BTC
 # TODO : Telegram bot
 # TODO : Way to increase LTC
+# TODO : Use Pandas, visualize arbitrage with ticker
 
 amount_dict = {
         "BTC": 0.03,
         "ETH": 0.3,
-        "LTC": 18, #3.0,
+        "LTC": 3.0,
         "DASH": 0.6,
         "ETC": 3.0,
         "XRP": 100
@@ -498,12 +499,12 @@ class wallet:
             self.alt_polo = 15*r
             self.alt_krx = 15*r#26,000
         elif coin == 'LTC':
-            self.btc_polo = 0.1 *r # 3,360,000
-            self.btc_krx = 0.1 *r# 3,360,000
+            self.btc_polo = 0.1  # 3,360,000 #30
+            self.btc_krx = 0.1 # 3,360,000 #30
             self.btc_depo_delayed = 0
             self.krw_krx = 200000*r
-            self.alt_polo = 6*r
-            self.alt_krx = 6*r # 55,800
+            self.alt_polo = 5 # 30 
+            self.alt_krx = 5 # 55,800 # 30
         elif coin == 'DASH':
             self.btc_polo = 0.1 *r # 3,360,000
             self.btc_krx = 0.1 *r# 3,360,000
