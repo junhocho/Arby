@@ -12,7 +12,7 @@ logging.basicConfig(format=log_format, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-class Account:
+class Coinone:
     def __init__(self, token, key):
         self.token = token
         self.key = key

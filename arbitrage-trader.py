@@ -7,14 +7,25 @@
 
 import sys
 import os
-from xcoin_api_client import *
+
 import pprint
 import json
 
-import time
 from datetime import datetime
+import time
 # from noti.slack import SlackLogger
-import poloniex
+
+### API calls
+from xcoin_api_client import *
+from coinone.account import Coinone
+from poloniex import *
+from secret import *
+
+b_api = XCoinAPI(BITHUMB_API_KEY, BITHUMB_API_SECRET);
+my = Coinone(COINONE_API_KEY, COINONE_API_SECRET)
+p_api = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
+
+
 from yahoo_finance import Currency
 
 
@@ -48,6 +59,8 @@ import logging.handlers
 logger = logging.getLogger('crumbs')
 logger.setLevel(logging.DEBUG)
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 
 #formatter
 formatter = logging.Formatter('[%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s > %(message)s')
@@ -65,36 +78,10 @@ streamHandler.setFormatter(formatter)
 logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 
-# logging
-#logger.debug('debug')
-#logger.debug('info')
-#logger.debug('warning')
-#logger.debug('error')
-#logger.debug('critical')
-
-
-
-#
-#
-#ema_pred_flag = 0
-#
-#def ema_pred(flag):
-#    if flag:
-#        return (ema_grad > 0  and count>60) # TODO default count 60
-#    else:
-#        return True
-
-
-b_api_key = os.environ["BITHUMB_API_KEY"]
-b_api_secret = os.environ["BITHUMB_API_SECRET"]
 #logger = SlackLogger(os.environ["BITHUMB_API_NAME"])
 
-p_api_key = os.environ["POLONIEX_API_KEY"]
-p_api_secret = os.environ["POLONIEX_API_SECRET"]
 
 
-b_api = XCoinAPI(b_api_key, b_api_secret)
-p_api = poloniex.Poloniex(p_api_key, p_api_secret)
 ############### EMA INITIAL SETUP ##############
 
 # TODO : LTC amount
@@ -195,40 +182,39 @@ log_file = "exchange_logs/log.csv"
 coin_log_file = "exchange_logs/" + coin + "_log.csv"
 amount = amount_dict[coin]
 
-time_ema = 1500/update_period
-last_buy_price = 0
-
-b_transParams_BTC = {
-        "apiKey" : b_api_key,
-        "secretKey" : b_api_secret,
-        "currency" : 'BTC',
-        "units" : amount/4
-        }
-
-b_transParams_coin = {
-        "apiKey" : b_api_key,
-        "secretKey" : b_api_secret,
-        "currency" : coin,
-        "units" : amount/4
-        }
-
-b_info_orders_Params_BTC = {
-        "apiKey" : b_api_key,
-        "secretKey" : b_api_secret,
-        "currency" : 'BTC'
-        }
-b_info_orders_Params_coin = {
-        "apiKey" : b_api_key,
-        "secretKey" : b_api_secret,
-        "currency" : coin
-        }
-p_info_orders_Params = {
-        "currencyPair" : polo_coin
-        }
-
-my_krw = 0
-my_coin = 0
-state = False
+#time_ema = 1500/update_period
+#last_buy_price = 0
+# b_transParams_BTC = {
+#         "apiKey" : b_api_key,
+#         "secretKey" : b_api_secret,
+#         "currency" : 'BTC',
+#         "units" : amount/4
+#         }
+# 
+# b_transParams_coin = {
+#         "apiKey" : b_api_key,
+#         "secretKey" : b_api_secret,
+#         "currency" : coin,
+#         "units" : amount/4
+#         }
+# 
+# b_info_orders_Params_BTC = {
+#         "apiKey" : b_api_key,
+#         "secretKey" : b_api_secret,
+#         "currency" : 'BTC'
+#         }
+# b_info_orders_Params_coin = {
+#         "apiKey" : b_api_key,
+#         "secretKey" : b_api_secret,
+#         "currency" : coin
+#         }
+# p_info_orders_Params = {
+#         "currencyPair" : polo_coin
+#         }
+# 
+# my_krw = 0
+# my_coin = 0
+# state = False
 ######################## FUNCTIONS ########################
 
 #################################################
@@ -714,7 +700,8 @@ class wallet:
 
 iter_arb = 0
 prem_alert = 0  # -1 | 0 | 1
-time.sleep(update_period)
+
+import time
 
 
 polo_bot.collect_price()
