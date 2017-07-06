@@ -97,6 +97,22 @@ for c in bith_balance:
     if float(bith_balance[c]) > 0:
         print(c, bith_balance[c])
 
+print("==== Coinone Balance ==== ")
+from secret import ACCESS_TOKEN, SECRET_KEY
+from coinone.account import Account
+from pprint import pprint
+
+my = Account(ACCESS_TOKEN, SECRET_KEY)
+mybal = my.balance()
+coinone_balance = {}
+coinone_balance['BTC'] = mybal['btc']['balance']
+coinone_balance['ETC']= mybal['etc']['balance']
+coinone_balance['ETH']= mybal['eth']['balance']
+coinone_balance['KRW']= mybal['krw']['balance']
+
+for c in coinone_balance:
+    if float(coinone_balance[c]) > 0:
+        print(c, coinone_balance[c])
 
 print("==== Polo Balance ==== ")
 import poloniex
@@ -115,7 +131,9 @@ for c in polo_balance:
 
 
 
+
 sys.exit(0);
 
 
+print("==== Polo Balance ==== ")
 
