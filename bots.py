@@ -13,7 +13,7 @@ p_api = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 # ========== FEE  =====
 # POLO
 # Maker   Taker   Trade Volume (trailing 30 day avg)
-# 0.15%   0.25%   < 600 BTC
+# 0.15%   0.25%   < 600 BTC <<
 # 0.14%   0.24%   ≥ 600 BTC
 # 0.12%   0.22%   ≥ 1,200 BTC
 # 0.10%   0.20%   ≥ 2,400 BTC
@@ -35,7 +35,7 @@ p_api = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 # 레벨    최근 30일간 거래금액    Maker   Taker
 # Lv.1    5,000,000원 미만        0.15%   0.15%
 # Lv.2    50,000,000원 미만       0.12%   0.13%
-# Lv.3    500,000,000원 미만      0.09%   0.11%
+# Lv.3    500,000,000원 미만      0.09%   0.11%  <<
 # Lv.4    2,500,000,000원 미만    0.06%   0.09%
 # Lv.5    10,000,000,000원 미만   0.03%   0.07%
 # VIP     50,000,000,000원 미만   0%      0.05%
