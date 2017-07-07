@@ -26,17 +26,17 @@ t_tx = 30*60
 r_tx = 3/4
 
 
-optLen = len(sys.argv)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--alt_kind', default='LTC')
+parser.add_argument('--krx_name', default='BITHUMB')
+parser.add_argument('--exp_name',  default='')
+param = parser.parse_args()
 
-if optLen == 2:
-    alt_kind = sys.argv[1]
-elif optLen == 3:
-    alt_kind = sys.argv[1]
-    krx_name = sys.argv[2]
-elif optLen == 4:
-    alt_kind = sys.argv[1]
-    krx_name = sys.argv[2]
-    exp_name = sys.argv[3]
+alt_kind = param.alt_kind
+krx_name = param.krx_name
+exp_name = param.exp_name
+
 
 # Setup Logger
 
