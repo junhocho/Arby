@@ -224,7 +224,7 @@ while(True):
         continue
 
     prem_alert = Arby.calculate_premium(iter_arb, threshold)
-    #prem_alert = -1
+    #prem_alert = 1
 
 
     # TODO : Transaction ALT needed 

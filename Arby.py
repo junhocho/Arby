@@ -44,12 +44,17 @@ class Arby:
             # self.alt_polo = 5 # 30
             # self.alt_krx = 5 # 55,800 # 30
         elif self.alt_name == 'DASH':
-            self.btc_polo = 0.1 *r # 3,360,000
-            self.btc_krx = 0.1 *r# 3,360,000
-            self.btc_depo_delayed = 0
-            self.krw_krx = 200000*r
-            self.alt_polo = 1.5*r
-            self.alt_krx = 1.5*r #230,000
+            self.polo_bot.btc_deposit(0.1)
+            self.krx_bot.btc_deposit(0.1)
+            self.polo_bot.alt_deposit(1.5)
+            self.krx_bot.alt_deposit(1.5)
+            self.krx_bot.krw_deposit(200000)
+            # self.btc_polo = 0.1 *r # 3,360,000
+            # self.btc_krx = 0.1 *r# 3,360,000
+            # self.btc_depo_delayed = 0
+            # self.krw_krx = 200000*r
+            # self.alt_polo = 1.5*r
+            # self.alt_krx = 1.5*r #230,000
 
         self.btc_tx_delayed = 0
         self.alt_tx_delayed = 0

@@ -370,7 +370,7 @@ class poloniex_bot:
     def btc2alt(self):
         btc_needed = self.alt_onetrd_amount * (self.buy_price * (1 + self.fee_trd))
 
-        if (self.btc < btc_needed  ):
+        if (self.btc_balance < btc_needed  ):
             # Not enough money to buy coin
             return False
         else:
