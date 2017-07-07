@@ -171,8 +171,15 @@ class bithumb_bot:
         self.sell_order = 0
 
         self.fee_trd = 0.075 # percentage. Use coupon!
-        self.fee_btc_tx = 0.0005 # BTC
+        self.fee_btc_tx = 0.0005 # BTC 
         self.fee_alt_tx = 0.01 # LTC  FUCKING expensive
+        ### BITHUMB fee_tx
+        # BTC 0.0005  (3091000 * 0.0005 = 1500 krw)
+        # All ALT 0.01
+        # ETH 3100 krw
+        # DASH 2400 krw
+        # LTC 600
+        # ETC 200
 
         self.btc_balance = 0
         self.alt_balance = 0
