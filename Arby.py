@@ -76,6 +76,7 @@ class Arby:
         self.eval_asset_init = self.asset_in_btc()
         self.btc_ratio = 1
         self.alt_ratio = 1
+        self.total_ratio = 1
 
         self.prem_pos = 0
         self.prem_neg = 0
@@ -114,7 +115,8 @@ class Arby:
         # print('\t{} : {}'.format(self.alt_name, self.krx_bot.alt_balance))
         # print('\t{} : {}'.format('KRW',self.krx_bot.krw_balance))
         btcsum = self.asset_in_btc()
-        print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, btcsum / self.asset_init))
+        self.total_ratio = btcsum / self.asset_init
+        print('\tWorths BTC : {} \t ratio = {}'.format(btcsum, self.total_ratio))
         self.btc_ratio = self.btc_sum() / self.btc_init
         self.alt_ratio = self.alt_sum() / self.alt_init
         print('\tCoin ratio : BTC : {}\t {} : {}'.format(self.btc_ratio, self.alt_name, self.alt_ratio))

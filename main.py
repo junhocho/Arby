@@ -208,7 +208,7 @@ Arby.show_asset()
 time_arbstart = time.time()
 while(True):
     time_running = (time.time() - time_arbstart)/60
-    print("{} {} {:6} {:6.0f}m {:10.4f}\t  {}".format(krx_name, alt_kind, iter_arb, time_running , Arby.btc_ratio ,datetime.now()))
+    print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}".format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio , Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
     # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
     iter_s= time.time()
 
