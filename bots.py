@@ -294,6 +294,7 @@ class bithumb_bot:
         t = time.time()
         if btc_with_amount < self.btc_with_min:
             raise ValueError('btc to withdrawal : {} is smaller than {}'.format(btc_with_amount), self.btc_with_min)
+        print("Tx BTC : BITHUMB -> POLO")
 
         btc_in_tx = btc_with_amount - self.fee_btc_tx
         self.btc_balance -= btc_with_amount
@@ -310,6 +311,7 @@ class bithumb_bot:
         if alt_with_amount < self.alt_with_min:
             raise ValueError('alt to withdrawal : {} is smaller than {}'.format(alt_with_amount, self.alt_with_min))
 
+        print("Tx ALT : BITHUMB -> POLO")
         alt_in_tx = alt_with_amount - self.fee_alt_tx
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
@@ -434,6 +436,7 @@ class poloniex_bot:
         btc_in_tx = btc_with_amount - self.fee_btc_tx
         if btc_in_tx < 0:
             raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
+        print("Tx BTC : POLO -> BITHUMB")
         self.btc_balance -= btc_with_amount
         self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
         self.usd_with_daily_amount += btc_with_amount * self.btcusd()
@@ -449,6 +452,7 @@ class poloniex_bot:
         alt_in_tx = alt_with_amount - self.fee_alt_tx
         if alt_in_tx < 0:
             raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
+        print("Tx ALT : POLO -> BITHUMB")
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
         self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()

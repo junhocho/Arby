@@ -88,23 +88,23 @@ alt_onetrd_amount_dict = {
         "XRP": 100
         }
 
-threshold_dict = {
-        "BTC": 1000,
-        "ETH": 200,
-        "LTC": 20,
-        "DASH": 100,
-        "ETC": 20
-        }
+# threshold_dict = {
+#         "BTC": 1000,
+#         "ETH": 200,
+#         "LTC": 20,
+#         "DASH": 100,
+#         "ETC": 20
+#         }
 
 alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]
 polo_coin_dict = ["BTC_ETH", "BTC_ETC", "BTC_LTC", "BTC_DASH", "BTC_XRP"]
-pform_dict = {'ETH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
-        'LTC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
-        'DASH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
-        'ETC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
-        'XRP' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}'}
-
-pform = pform_dict[alt_kind]
+# pform_dict = {'ETH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
+#         'LTC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
+#         'DASH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
+#         'ETC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
+#         'XRP' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}'}
+# 
+# pform = pform_dict[alt_kind]
 
 # Threshold for gap price
 threshold = 1.2 / 100.0 # 0.01
@@ -222,7 +222,7 @@ while(True):
         continue
 
     prem_alert = Arby.calculate_premium(iter_arb, threshold)
-    prem_alert = 1
+    #prem_alert = -1
 
 
     # Better transactoin algo is needed
