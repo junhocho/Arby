@@ -22,9 +22,9 @@ alt_kind = 'LTC'
 krx_name = 'BITHUMB'
 exp_name = '1'
 
-t_tx = 30*60
-r_tx = 3/4
-
+threshold = 0.5 / 100.0 # 0.01
+#threshold = 1.2 / 100.0 # 0.01
+#t_tx = 30*60
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -107,7 +107,6 @@ polo_coin_dict = ["BTC_ETH", "BTC_ETC", "BTC_LTC", "BTC_DASH", "BTC_XRP"]
 # pform = pform_dict[alt_kind]
 
 # Threshold for gap price
-threshold = 1.2 / 100.0 # 0.01
 
 
 
@@ -228,8 +227,8 @@ while(True):
     # Better transactoin algo is needed
     Arby.check_transaction()
     if prem_alert == 1 or prem_alert == -1: # Prem alerted previously
-        Arby.arbitrage(prem_alert)
-        #Arby.show_asset()
+        success = Arby.arbitrage(prem_alert)
+        if success: Arby.show_asset()
         prem_alert = 0
 
     # Tx between polo and krx

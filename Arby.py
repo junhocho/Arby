@@ -64,7 +64,7 @@ class Arby:
         self.polo_alt_tx_info = None
         self.krx_btc_tx_info = None
         self.krx_alt_tx_info = None
-        self.time_tx = 15*60
+        self.time_tx = 10 #15*60
 
 
         self.btc_init = self.btc_sum()
@@ -193,16 +193,20 @@ class Arby:
 
 
     def arbitrage(self, prem_alert):
+        success = False
         if prem_alert == 1:
             if (self.krx_sell_polo_buy()):
                 self.prem_pos += 1
+                success = True
             else:
                 self.prem_pos_failed += 1
         elif prem_alert == -1:
             if (self.polo_sell_krx_buy()):
                 self.prem_neg += 1
+                success = True
             else:
                 self.prem_neg_failed += 1
+        return success
 
     def check_transaction(self):
         if self.polo_alt_tx_info: # ALT : polo -> krx
