@@ -171,7 +171,7 @@ class bithumb_bot:
         self.sell_order = 0
 
         self.fee_trd = 0.075 # percentage. Use coupon!
-        self.fee_btc_tx = 0.0005 # BTC 
+        self.fee_btc_tx = 0.0005 # BTC
         self.fee_alt_tx = 0.01 # LTC  FUCKING expensive
         ### BITHUMB fee_tx
         # BTC 0.0005  (3091000 * 0.0005 = 1500 krw)
@@ -236,29 +236,26 @@ class bithumb_bot:
     def krw_withdraw(self, with_amount):
         self.krw_balance -= with_amount
 
+    def btc2alt(self): # BTC -> KRW
+        btc_tosell = self.alt_onetrd_amount * self.buy_price
+        #krw_needed / self.krx_bot.btckrw_buy_price
+        if (self.btc_balance < btc_tosell):
+            raise ValueError('BITHUMB BTC not enough : {} < {}'.format(self.btc_balance, btc_tosell))
+        self.btc_balance -= btc_tosell
+        self.alt_balance += self.alt_onetrd_amount
+        self.krw_trd_amount += btc_tosell * self.btckrw_sell_price
+
     def alt2btc(self):
         if (self.alt_balance < self.alt_onetrd_amount):
-            return False
-        else:
-            #self.krw_krx += krw_earned
-            self.alt_balance -= self.alt_onetrd_amount
+            raise ValueError('BITHUMB ALT not enough : {} < {}'.format(self.alt_balance , self.alt_onetrd_amount))
+
+        #self.krw_krx += krw_earned
+        self.alt_balance -= self.alt_onetrd_amount
         #btc_earned = krw_earned / self.krx_bot.btckrw_sell_price
         btc_earned = self.alt_onetrd_amount * self.sell_price
         #self.krw_krx -= krw_earned
         self.btc_balance += btc_earned
         self.krw_trd_amount += self.alt_onetrd_amount * self.altkrw_sell_price
-        return True
-
-    def btc2alt(self): # BTC -> KRW
-        btc_tosell = self.alt_onetrd_amount * self.buy_price  #krw_needed / self.krx_bot.btckrw_buy_price
-
-        if (self.btc_balance < btc_tosell):
-            return False
-
-        self.btc_balance -= btc_tosell
-        self.alt_balance += self.alt_onetrd_amount
-        self.krw_trd_amount += btc_tosell * self.btckrw_sell_price
-        return True
 
     def check_btc_tx_limit(self, btc_with_amount):
         # if day passed : init limit
@@ -284,29 +281,34 @@ class bithumb_bot:
         else:
             return False
 
-    def btc_tx(self, btc_with_amount):
+    def transact_btc2polo(self, btc_with_amount):
         # 1. check krx_bot btc account to tx
         # 2. btc_balance -= transaction + self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         if btc_with_amount < self.btc_with_min:
             raise ValueError('btc to withdrawal : {} is smaller than {}'.format(btc_with_amount), self.btc_with_min)
-        btc_needed = btc_with_amount + self.fee_btc_tx
-        self.btc_balance -= btc_needed
-        self.btc_in_tx = btc_with_amount # TODO : should be zero if polo recieved
-        self.btc_with_daily_amount += btc_needed
 
-    def alt_tx(self, alt_with_amount):
+        btc_in_tx = btc_with_amount - self.fee_btc_tx
+        self.btc_balance -= btc_with_amount
+        self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
+        self.btc_with_daily_amount += btc_with_amount
+        return btc_in_tx
+
+    def transact_alt2polo(self, alt_with_amount):
         # 1. check krx_bot alt account to tx
         # 2. transaction - self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         if alt_with_amount < self.alt_with_min:
             raise ValueError('alt to withdrawal : {} is smaller than {}'.format(alt_with_amount, self.alt_with_min))
-        alt_needed = alt_with_amount + self.fee_alt_tx
-        self.alt_balance -= alt_needed
-        self.alt_in_tx = alt_with_amount
-        self.alt_with_daily_amount += alt_needed
+
+        alt_in_tx = alt_with_amount - self.fee_alt_tx
+        self.alt_balance -= alt_with_amount
+        self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
+        self.alt_with_daily_amount += alt_with_amount
+        return alt_in_tx
+
 
 
 ##   POLO
@@ -376,26 +378,22 @@ class poloniex_bot:
 
     def btc2alt(self):
         btc_needed = self.alt_onetrd_amount * (self.buy_price * (1 + self.fee_trd))
-
         if (self.btc_balance < btc_needed  ):
             # Not enough money to buy coin
-            return False
-        else:
-            self.btc_balance -= btc_needed
-            self.alt_balance += self.alt_onetrd_amount
-            self.btc_trd_amount += btc_needed
-            return True
+            # return False
+            raise ValueError('POLO BTC not enough : {} < {}'.format(self.btc_balance, btc_needed))
+        self.btc_balance -= btc_needed
+        self.alt_balance += self.alt_onetrd_amount
+        self.btc_trd_amount += btc_needed
 
     def alt2btc(self):
-        btc_earned = self.alt_onetrd_amount * (self.sell_price * (1 - self.fee_trd))
-
         if (self.alt_balance < self.alt_onetrd_amount):
-            return False
-        else:
-            self.btc_balance += btc_earned
-            self.alt_balance -= self.alt_onetrd_amount
-            self.btc_trd_amount += btc_earned
-            return True
+            raise ValueError('POLO ALT not enough : {} < {}'.format(self.alt_balance , self.alt_onetrd_amount))
+
+        btc_earned = self.alt_onetrd_amount * (self.sell_price * (1 - self.fee_trd))
+        self.btc_balance += btc_earned
+        self.alt_balance -= self.alt_onetrd_amount
+        self.btc_trd_amount += btc_earned
 
     def eval_alt(self, alt_amount): # Evaluate alt in btc for price now.
         return alt_amount * self.sell_price * (1 - self.fee_trd)
@@ -416,7 +414,7 @@ class poloniex_bot:
         ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
         return int(json.loads(ret.read())['result']['price'])
 
-    def btc_tx(self, btc_with_amount):
+    def transact_btc2krx(self, btc_with_amount):
         # 1. check krx_bot btc account to tx
         # 2. btc_balance -= transaction + self.fee_tx
         # 3. accumulate self.btc_with_amount
@@ -427,9 +425,10 @@ class poloniex_bot:
         self.btc_balance -= btc_with_amount
         self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
         self.usd_with_daily_amount += btc_with_amount * self.btcusd()
+        return btc_in_tx
 
 
-    def alt_tx(self, alt_with_amount):
+    def transact_alt2krx(self, alt_with_amount):
         # 1. check krx_bot alt account to tx
         # 2. transaction - self.fee_tx
         # 3. accumulate self.btc_with_amount
@@ -440,6 +439,7 @@ class poloniex_bot:
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
         self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
+        return alt_in_tx
 
 
 #################################################

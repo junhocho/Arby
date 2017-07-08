@@ -208,17 +208,15 @@ Arby.show_asset()
 
 time_arbstart = time.time()
 while(True):
-    time_taken = (time.time() - time_arbstart)/60
-    print("{} {} {:6} {:6.0f}m {:10.4f}\t  {}".format(krx_name, alt_kind, iter_arb, time_taken , Arby.btc_ratio ,datetime.now()))
+    time_running = (time.time() - time_arbstart)/60
+    print("{} {} {:6} {:6.0f}m {:10.4f}\t  {}".format(krx_name, alt_kind, iter_arb, time_running , Arby.btc_ratio ,datetime.now()))
+    # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
     iter_s= time.time()
 
     try:
         krx_bot.collect_price()
         polo_bot.collect_price()
     except Exception as e:
-        #print(e)
-        #print('waiting next iter')
-        #logger.error( e);
         logger.exception("waiting next iter")
         wait(iter_s)
         continue
@@ -234,23 +232,24 @@ while(True):
         Arby.show_asset()
         prem_alert = 0
 
-    #if Arby.btc_depo_delayed > 0: # In tx
-    #    #print(time.time() - t_with , "waiting depo...")
-    #    if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
-    #        Arby.transact_btc_done(tx_method)
-    #        print("TX Done!")
-    #        Arby.reallo += 1
-    #        Arby.show_asset()
-    #elif Arby.btc_depo_delayed == 0: # Not in tx
-    #    #if Arby.btc_polo / Arby.btc_krx < r_tx or Arby.btc_polo / Arby.btc_krx > 1/r_tx: # or  count % 30 == 0 :
-    #    if Arby.btc_polo / Arby.btc_krx > r_tx or Arby.btc_polo / Arby.btc_krx < 1/r_tx: # or  count % 30 == 0 :
-    #        #if Arby.btc_polo / Arby.btc_krx != 1:
-    #        tx_method = Arby.transact_btc_start(prem_alert)
-    #        t_with = time.time()
-    #        print("TX Start!")
-    #        Arby.show_asset()
-    if iter_arb % 10 == 0:
-        #Arby.asset_reallocate()
-        print("NEED IMPLEMENTATION, check current premium and balance")
+    # Tx between polo and krx
+    if Arby.btc_depo_delayed > 0: # In tx
+        #print(time.time() - t_with , "waiting depo...")
+        if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
+            Arby.transact_btc_done(tx_method)
+            print("TX Done!")
+            Arby.reallo += 1
+            Arby.show_asset()
+    elif Arby.btc_depo_delayed == 0: # Not in tx
+        #if Arby.btc_polo / Arby.btc_krx < r_tx or Arby.btc_polo / Arby.btc_krx > 1/r_tx: # or  count % 30 == 0 :
+        if Arby.btc_polo / Arby.btc_krx > r_tx or Arby.btc_polo / Arby.btc_krx < 1/r_tx: # or  count % 30 == 0 :
+            #if Arby.btc_polo / Arby.btc_krx != 1:
+            tx_method = Arby.transact_btc_start(prem_alert)
+            t_with = time.time()
+            print("TX Start!")
+            Arby.show_asset()
+    # if iter_arb % 10 == 0:
+    #     #Arby.asset_reallocate()
+    #     print("NEED IMPLEMENTATION, check current premium and balance")
 
     wait(iter_s)

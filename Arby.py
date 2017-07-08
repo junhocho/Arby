@@ -134,37 +134,54 @@ class Arby:
     ## then, BTC->ALT
     ## Chekcout both ALT, BTC amount needed from my wallet for the operation.
     ## Also need to check there are enough ask orders on exchange.
+    ## Sell the expensive first
 
     def krx_sell_polo_buy(self):
-        if (self.polo_bot.btc2alt()): # BTC->TAR
-            print("\tPOLO : BTC ->", self.alt_name)
-        else:
-            print("\tPOLO : BTC ->", self.alt_name, ": FAILED!!!!")
-            return False
+        success = True
+        try:
+            self.krx_bot.alt2btc() # krx : ALT -> BTC
+        except ValueError as e:
+            print("\t{} : {} -> BTC : FAILED!!!!"
+                    .format(self.krx_bot.exchange_name, self.alt_name))
+            if (self.polo_bot.alt_in_tx == 0):
+                # If transaction is on going, do not transact
+                # ALT : polo -> krx
+                self.polo_bot.transact_alt2krx(self.polo_bot.alt_balance)
+            success = False
 
-        if (self.krx_bot.alt2btc()): # TAR->BTC
-            print("\t{} : {} -> BTC".format(self.krx_bot.exchange_name, self.alt_name))
-            return True
-        else:
-            print("\t{} : {} -> BTC : FAILED!!!!".format(self.krx_bot.exchange_name, self.alt_name))
-            return False
-
-
+        try:
+            self.polo_bot.btc2alt()): # polo : BTC -> ALT
+        except ValueError as e:
+            print("\tPOLO : BTC -> {} : FAILED!!!!".
+                    format(self.alt_name))
+            if (self.krx_bot.btc_in_tx == 0):
+                # BTC : krx -> polo
+                self.krx_bot.transact_btc2polo(self.krx_bot.btc_balance)
+            success = False
+        return success
 
     def polo_sell_krx_buy(self): #1
-        if (self.krx_bot.btc2alt()): # BTC->TAR# TODO  Order matters??
-            print("\t{} : BTC -> {}".format(self.krx_bot.exchange_name, self.alt_name))
-        else:
-            print("\t{} : BTC -> {} : FAILED!!!!".format(self.krx_bot.exchange_name, self.alt_name))
-            return False
+        success = True
+        try:
+            self.polo_bot.alt2btc()) # polo : ALT->BTC
+        except ValueError as e:
+            print("\tPOLO : {} -> BTC : FAILED!!!!"
+                    .format(self.alt_name))
+            if (self.krx_bot.alt_in_tx == 0):
+                # ALT : krx -> polo
+                self.krx_bot.transact_alt2polo(self.krx_bot.alt_balance) # SEND all ALT
+            success = False
 
-        if (self.polo_bot.alt2btc()): # TAR->BTC
-            print("\tPOLO : {} -> BTC".format(self.alt_name))
-            return True
-        else:
-            print("\tPOLO : {} -> BTC : FAILED!!!!".format(self.alt_name))
-            return False
-
+        try:
+            self.krx_bot.btc2alt() # krx : BTC-> ALT
+        except ValueError as e:
+            print("\t{} : BTC -> {} : FAILED!!!!"
+                    .format(self.krx_bot.exchange_name, self.alt_name))
+            # BTC : polo -> krx
+            if (self.polo_bot.btc_in_tx == 0):
+                self.polo_bot.transact_btc2krx(self.polo_bot.btc_balance) # SEND all BTC
+            success = False
+        return success
 
 
     def arbitrage(self, prem_alert):
@@ -242,15 +259,15 @@ class Arby:
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             #print('#################### PREMIUM ALERT ####################\a')
             #print()
-            print('\tPOLO : BTC -> {}   /    {} :  {} -> BTC'.format(self.alt_name,
-                self.krx_bot.exchange_name, self.alt_name))
+            print('\t{} :  {} -> BTC \t|\t POLO : BTC -> {}'
+                    .format(self.krx_bot.exchange_name, self.alt_name, self.alt_name))
             print('\tPREM RATIO: ', prem_pos_r * 100, ' %')
             prem = 1
         if(prem_neg_r > threshold): # Each market threshold need comission
             #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             #print('#################### PREMIUM ALERT ####################\a')
             #print()
-            print('\tPOLO : {} -> BTC   /    {} :  BTC -> {}'.format(self.alt_name,
+            print('\tPOLO : {} -> BTC \t|\t {} :  BTC -> {}'.format(self.alt_name,
                 self.krx_bot.exchange_name, self.alt_name))
             print('\tPREM RATIO: ', prem_neg_r * 100, ' %')
             prem = -1
