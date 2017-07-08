@@ -5,6 +5,7 @@ from poloniex import *
 from secret import *
 
 from datetime import datetime
+import time
 
 b_api = XCoinAPI(BITHUMB_API_KEY, BITHUMB_API_SECRET);
 my = Coinone(COINONE_API_KEY, COINONE_API_SECRET)
@@ -171,8 +172,11 @@ class bithumb_bot:
         self.sell_order = 0
 
         self.fee_trd = 0.075 # percentage. Use coupon!
-        self.fee_btc_tx = 0.0005 # BTC
-        self.fee_alt_tx = 0.01 # LTC  FUCKING expensive
+        self.fee_btc_tx = 0.0005 # BTC  1500
+        self.fee_alt_tx = 0.01 # LTC  600
+
+        self.btc_in_tx = 0
+        self.alt_in_tx = 0
         ### BITHUMB fee_tx
         # BTC 0.0005  (3091000 * 0.0005 = 1500 krw)
         # All ALT 0.01
@@ -180,6 +184,7 @@ class bithumb_bot:
         # DASH 2400 krw
         # LTC 600
         # ETC 200
+
 
         self.btc_balance = 0
         self.alt_balance = 0
@@ -286,6 +291,7 @@ class bithumb_bot:
         # 2. btc_balance -= transaction + self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
+        t = time.time()
         if btc_with_amount < self.btc_with_min:
             raise ValueError('btc to withdrawal : {} is smaller than {}'.format(btc_with_amount), self.btc_with_min)
 
@@ -293,13 +299,14 @@ class bithumb_bot:
         self.btc_balance -= btc_with_amount
         self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
         self.btc_with_daily_amount += btc_with_amount
-        return btc_in_tx
+        return {'time' : t, 'amount' : btc_in_tx}
 
     def transact_alt2polo(self, alt_with_amount):
         # 1. check krx_bot alt account to tx
         # 2. transaction - self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
+        t = time.time()
         if alt_with_amount < self.alt_with_min:
             raise ValueError('alt to withdrawal : {} is smaller than {}'.format(alt_with_amount, self.alt_with_min))
 
@@ -307,7 +314,7 @@ class bithumb_bot:
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
         self.alt_with_daily_amount += alt_with_amount
-        return alt_in_tx
+        return {'time' : t, 'amount' : alt_in_tx}
 
 
 
@@ -325,12 +332,16 @@ class poloniex_bot:
         self.orderbook = None
 
         self.fee_trd = 0.0025 # percentage
-        self.fee_btc_tx = 0.0001 # BTC
-        self.fee_alt_tx = 0.001 # LTC
+        self.fee_btc_tx = 0.0001 # BTC 300 krw
+        self.fee_alt_tx = 0.001 # LTC 60 krw
 
         self.btc_balance = 0
         self.alt_balance = 0
         self.btc_trd_amount = 0 # TODO : if exceed, trade level up
+
+        self.btc_in_tx = 0
+        self.alt_in_tx = 0
+
 
         # self.btc_with_daily_amount = 0
         # self.alt_with_daily_amount = 0
@@ -419,13 +430,14 @@ class poloniex_bot:
         # 2. btc_balance -= transaction + self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
+        t = time.time()
         btc_in_tx = btc_with_amount - self.fee_btc_tx
         if btc_in_tx < 0:
             raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
         self.btc_balance -= btc_with_amount
         self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
         self.usd_with_daily_amount += btc_with_amount * self.btcusd()
-        return btc_in_tx
+        return {'time' : t, 'amount' : btc_in_tx}
 
 
     def transact_alt2krx(self, alt_with_amount):
@@ -433,13 +445,14 @@ class poloniex_bot:
         # 2. transaction - self.fee_tx
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
+        t = time.time()
         alt_in_tx = alt_with_amount - self.fee_alt_tx
         if alt_in_tx < 0:
             raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
         self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
-        return alt_in_tx
+        return {'time' : t, 'amount' : alt_in_tx}
 
 
 #################################################

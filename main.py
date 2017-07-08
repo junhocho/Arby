@@ -82,7 +82,7 @@ logger.addHandler(streamHandler)
 alt_onetrd_amount_dict = {
         "BTC": 0.03,
         "ETH": 0.3,
-        "LTC": 3.0,
+        "LTC": 1.0,
         "DASH": 0.6,
         "ETC": 3.0,
         "XRP": 100
@@ -222,32 +222,32 @@ while(True):
         continue
 
     prem_alert = Arby.calculate_premium(iter_arb, threshold)
-    #prem_alert = 1
+    prem_alert = 1
 
 
-    # TODO : Transaction ALT needed 
     # Better transactoin algo is needed
+    Arby.check_transaction()
     if prem_alert == 1 or prem_alert == -1: # Prem alerted previously
         Arby.arbitrage(prem_alert)
-        Arby.show_asset()
+        #Arby.show_asset()
         prem_alert = 0
 
     # Tx between polo and krx
-    if Arby.btc_depo_delayed > 0: # In tx
-        #print(time.time() - t_with , "waiting depo...")
-        if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
-            Arby.transact_btc_done(tx_method)
-            print("TX Done!")
-            Arby.reallo += 1
-            Arby.show_asset()
-    elif Arby.btc_depo_delayed == 0: # Not in tx
-        #if Arby.btc_polo / Arby.btc_krx < r_tx or Arby.btc_polo / Arby.btc_krx > 1/r_tx: # or  count % 30 == 0 :
-        if Arby.btc_polo / Arby.btc_krx > r_tx or Arby.btc_polo / Arby.btc_krx < 1/r_tx: # or  count % 30 == 0 :
-            #if Arby.btc_polo / Arby.btc_krx != 1:
-            tx_method = Arby.transact_btc_start(prem_alert)
-            t_with = time.time()
-            print("TX Start!")
-            Arby.show_asset()
+    # if Arby.btc_depo_delayed > 0: # In tx
+    #     #print(time.time() - t_with , "waiting depo...")
+    #     if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
+    #         Arby.transact_btc_done(tx_method)
+    #         print("TX Done!")
+    #         Arby.reallo += 1
+    #         Arby.show_asset()
+    # elif Arby.btc_depo_delayed == 0: # Not in tx
+    #     #if Arby.btc_polo / Arby.btc_krx < r_tx or Arby.btc_polo / Arby.btc_krx > 1/r_tx: # or  count % 30 == 0 :
+    #     if Arby.btc_polo / Arby.btc_krx > r_tx or Arby.btc_polo / Arby.btc_krx < 1/r_tx: # or  count % 30 == 0 :
+    #         #if Arby.btc_polo / Arby.btc_krx != 1:
+    #         tx_method = Arby.transact_btc_start(prem_alert)
+    #         t_with = time.time()
+    #         print("TX Start!")
+    #         Arby.show_asset()
     # if iter_arb % 10 == 0:
     #     #Arby.asset_reallocate()
     #     print("NEED IMPLEMENTATION, check current premium and balance")
