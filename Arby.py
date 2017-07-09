@@ -286,6 +286,11 @@ class Arby:
     #         self.btc_polo += self.btc_depo_delayed
     #     self.btc_depo_delayed = 0
 
+    def ticker_premium(self, threhold):
+        prem_pos_r = (self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1) * 100
+        prem_neg_r = (self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1) * 100
+        return (prem_pos_r, prem_neg_r)
+
     def calculate_premium(self, count, threshold):
         # 	print('BITHUMB :  \tBUY: ', b_buy_price, '\tSELL: ', b_sell_price, '\t|')
         # 	print('POLO :   \tBUY: ', p_buy_price, '\tSELL: ', p_sell_price, '\t|')
