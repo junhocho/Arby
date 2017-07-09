@@ -22,9 +22,10 @@ alt_kind = 'LTC'
 krx_name = 'BITHUMB'
 exp_name = '1'
 
+# Testint 1.3  1.2 0.8
 #threshold = 0.09 / 100.0 # 9000 krw # EXP
 #threshold = 0.5 / 100.0 # 0.01
-threshold = 1.3 / 100.0 # 0.01
+threshold = 0.5 / 100.0 # 0.01
 #t_tx = 30*60
 
 import argparse

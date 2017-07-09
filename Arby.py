@@ -295,14 +295,14 @@ class Arby:
         prem_pos_r = self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1
         prem_neg_r = self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1
 
-        print("\tPemium monitoring: POLO : BTC->{} | BITH : {}->BTC : {:5.2f}"
-                .format(self.alt_name,
-                    self.alt_name,
-                    prem_pos_r * 100))
-        print("\tPemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}"
-                .format(self.alt_name,
-                    self.alt_name,
-                    prem_neg_r * 100))
+        # print("\tPemium monitoring: POLO : BTC->{} | BITH : {}->BTC : {:5.2f}"
+        #         .format(self.alt_name,
+        #             self.alt_name,
+        #             prem_pos_r * 100))
+        # print("\tPemium monitoring: POLO : {}->BTC | BITH : BTC->{} : {:5.2f}"
+        #         .format(self.alt_name,
+        #             self.alt_name,
+        #             prem_neg_r * 100))
         #print()
         prem = 0
 
