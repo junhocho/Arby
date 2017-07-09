@@ -65,95 +65,22 @@ p_api = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 ### WITHDRAWAL LIMIT
 # coinone 50 BTC
 
-class coinone_bot:
-    def __init__(self, coin, amount):
-        self.alt_onetrd_amount = amount
+#### COINONE / KORBIT future API
+# btc_orderbook = requests.get('https://api.coinone.co.kr/orderbook/?currency=btc').json()
+# alt_orderbook  = requests.get('https://api.coinone.co.kr/orderbook/?currency='+self.alt).json()
+# btc_orderbook = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair=btc_krw').json()
+# alt_orderbook  = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair='+ self.alt.lower()+'_krw').json()
 
-        self.alt = coin
-        self.buy_price = None
-        self.sell_price = None
-        self.btckrw_buy_price = None
-        self.btckrw_sell_price = None
-        self.altkrw_buy_price = None
-        self.altkrw_sell_price = None
-
-    def collect_price(self):
-        try:
-            btc_orderbook = requests.get('https://api.coinone.co.kr/orderbook/?currency=btc').json()
-            alt_orderbook  = requests.get('https://api.coinone.co.kr/orderbook/?currency='+self.alt).json()
-            orderbook_loaded = True
-        except Exception as e:
-            print("Orderbook not loaded")
-            orderbook_loaded = False
-        if not orderbook_loaded: return False
-
-        #ret = urlopen(urllib.request.Request('https://api.bithumb.com/public/orderbook/BTC'))
-        #btc_orderbook = json.loads(ret.read())
-
-
-        # TODO : BTC amount limit??
-        self.btckrw_buy_price = float(btc_orderbook["ask"][0]["price"])  # TODO : Bithumb need to check BTC amount too.
-        self.btckrw_sell_price = float(btc_orderbook["bid"][0]["price"])
-
-
-        count = 0
-        while(float(alt_orderbook["ask"][count]["qty"])<self.alt_onetrd_amount):
-            count+=1
-        self.altkrw_buy_price = float(alt_orderbook["ask"][count]["price"])
-
-        # BTC sell -> TAR buy
-        self.altbtc_buy_price = self.altkrw_buy_price/self.btckrw_sell_price
-
-        count = 0
-        while(float(alt_orderbook["bid"][count]["qty"])<self.alt_onetrd_amount):
-            count+=1
-        self.altkrw_sell_price = float(alt_orderbook["bid"][count]["price"])
-        # BTC buy -> TAR sell
-        self.altbtc_sell_price = self.altkrw_sell_price/self.btckrw_buy_price
-
-class korbit_bot:
-    def __init__(self, coin, amount):
-        self.alt_onetrd_amount = amount
-
-        self.alt = coin
-        self.buy_price = None
-        self.sell_price = None
-        self.btckrw_buy_price = None
-        self.btckrw_sell_price = None
-        self.altkrw_buy_price = None
-        self.altkrw_sell_price = None
-
-    def collect_price(self):
-        #try:
-        btc_orderbook = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair=btc_krw').json()
-        alt_orderbook  = requests.get('https://api.korbit.co.kr/v1/orderbook?currency_pair='+ self.alt.lower()+'_krw').json()
-        #orderbook_loaded = True
-        #    print("Orderbook loaded")
-        #except Exception as e:
-        #    print("Orderbook not loaded")
-        #    orderbook_loaded = False
-        #if not orderbook_loaded: return False
-
-        # TODO : BTC amount limit??
-        self.btckrw_buy_price = float(btc_orderbook["asks"][0][0]) # Price
-        self.btckrw_sell_price = float(btc_orderbook["bids"][0][0])
-
-
-        count = 0
-        while(float(alt_orderbook["asks"][count][1])<self.alt_onetrd_amount): # quantity
-            count+=1
-        self.altkrw_buy_price = float(alt_orderbook["asks"][count][0])
-
-        # BTC sell -> TAR buy
-        self.altbtc_buy_price = self.altkrw_buy_price/self.btckrw_sell_price
-
-        count = 0
-        while(float(alt_orderbook["bids"][count][1])<self.alt_onetrd_amount):
-            count+=1
-        self.altkrw_sell_price = float(alt_orderbook["bids"][count][0])
-        # BTC buy -> TAR sell
-        self.altbtc_sell_price = self.altkrw_sell_price/self.btckrw_buy_price
-
+### ==========================
+# Bithumb notice
+# 『Public API』
+# 1초당 20회 요청 가능합니다.
+# 20회 초과 요청을 보내면 API 사용이 제한되며,
+# 제한 상태 해제는 관리자 승인이 필요합니다. (전화상담 요함)
+#
+# 『Private API』
+# 1초당 10회 요청 가능합니다.
+# 10회 초과 요청을 보내면 5분간 API 사용이 제한됩니다.
 
 class bithumb_bot:
     def __init__(self, alt_name, alt_onetrd_amount):
@@ -168,8 +95,6 @@ class bithumb_bot:
         self.btckrw_sell_price = None
         self.altkrw_buy_price = None
         self.altkrw_sell_price = None
-        self.buy_order = 0 ## TODO : Do we need?
-        self.sell_order = 0
 
         self.fee_trd = 0.075 # percentage. Use coupon!
         self.fee_btc_tx = 0.0005 # BTC  1500
@@ -193,36 +118,45 @@ class bithumb_bot:
 
         self.btc_with_daily_amount = 0 # BTC : 30.0005 once / 150 daily
         self.btc_with_once_limit = 30.0005
-        self.btc_with_daily_limit = 150
+        self.btc_with_daily_limit = 150 # 150 * 3060000 / 1153 = 400,000 usd
         self.btc_with_min = 0.001
 
         self.alt_with_daily_amount = 0 # LTC : 1500 once / 10000 daily
-        self.alt_with_daily_limit = 1500
-        self.alt_with_daily_limit = 10000
+        self.alt_with_once_limit = 1500
+        self.alt_with_daily_limit = 10000 #  10000 * 60000 / 1153 = 520,000 usd
         self.alt_with_min = 0.01
 
         self.today = datetime.now().day
 
     def collect_price(self):
-        btc_orderbook = requests.get('https://api.bithumb.com/public/orderbook/BTC').json()
-        # TODO : BTC amount limit??
-        # TODO : Bithumb need to check BTC amount too.
-        self.btckrw_buy_price = float(btc_orderbook["data"]["asks"][0]["price"])
-        self.btckrw_sell_price = float(btc_orderbook["data"]["bids"][0]["price"])
-
+        ## ALT
         alt_orderbook = requests.get('https://api.bithumb.com/public/orderbook/'+ self.alt_name).json()
         count = 0
         while(float(alt_orderbook["data"]["asks"][count]["quantity"])<self.alt_onetrd_amount):
             count+=1
         self.altkrw_buy_price = float(alt_orderbook["data"]["asks"][count]["price"])
         # BTC sell -> TAR buy
-        self.buy_price = self.altkrw_buy_price/self.btckrw_sell_price
 
         count = 0
         while(float(alt_orderbook["data"]["bids"][count]["quantity"])<self.alt_onetrd_amount):
             count+=1
         self.altkrw_sell_price = float(alt_orderbook["data"]["bids"][count]["price"])
         # BTC buy -> TAR sell
+
+        ## BTC
+        btc_orderbook = requests.get('https://api.bithumb.com/public/orderbook/BTC').json()
+        krw_onetrd_amount = self.alt_onetrd_amount * self.altkrw_sell_price ## Assumption of KRW needed
+        while(float(btc_orderbook["data"]["asks"][count]["quantity"]) < krw_onetrd_amount / float(btc_orderbook['data']['asks'][count]['price'])):
+            count+=1
+        self.btckrw_buy_price = float(btc_orderbook["data"]["asks"][count]["price"])
+
+
+        while(float(btc_orderbook["data"]["bids"][count]["quantity"]) < krw_onetrd_amount / float(btc_orderbook['data']['bids'][count]['price'])):
+            count+=1
+        self.btckrw_sell_price = float(btc_orderbook["data"]["bids"][count]["price"])
+
+        # Final sell/buy price
+        self.buy_price = self.altkrw_buy_price/self.btckrw_sell_price
         self.sell_price = self.altkrw_sell_price/self.btckrw_buy_price
 
     # API USED
@@ -265,26 +199,38 @@ class bithumb_bot:
     def check_btc_tx_limit(self, btc_with_amount):
         # if day passed : init limit
         day_server = datetime.now().day
-        if (self.today != day_server  ):
+        if (self.today != day_server  ): # Today became Yesterday
             self.today = day_server
             self.btc_with_daily_amount = 0
-            return True
-        elif self.btc_with_daily_amount < self.btc_with_daily_limit and btc_with_amount < self.btc_with_once_limit:
-            return True
-        else:
-            return False
+            print('BITHUMB Daily BTC tx limit init')
+
+        if self.btc_with_once_limit < btc_with_amount:
+            raise ValueError('BITHUMB {} BTC tx exceeds {} once limit'
+                    .format(btc_with_amount, self.btc_with_once_limit))
+        elif btc_with_amount < self.btc_with_min:
+            raise ValueError('btc to withdrawal : {} is smaller than {}'
+                    .format(btc_with_amount), self.btc_with_min)
+        elif self.btc_with_daily_limit < self.btc_with_daily_amount:
+            raise ValueError('BITHUMB {} BTC today tx exceeds {} daily limit'
+                    .format(self.btc_with_daily_amount, self.btc_with_daily_limit))
 
     def check_alt_tx_limit(self, alt_with_amount):
         # if day passed : init limit
         day_server = datetime.now().day
-        if (self.today != day_server  ):
+        if (self.today != day_server  ): # Today became Yesterday
             self.today = day_server
             self.alt_with_daily_amount = 0
-            return True
-        elif self.alt_with_daily_amount < self.alt_with_daily_limit and alt_with_amount < self.alt_with_once_limit:
-            return True
-        else:
-            return False
+            print('BITHUMB Daily ALT tx limit init')
+
+        if self.alt_with_once_limit < alt_with_amount:
+            raise ValueError('BITHUMB {} ALT tx exceeds {} once limit'
+                    .format(alt_with_amount, self.alt_with_once_limit))
+        elif alt_with_amount < self.alt_with_min:
+            raise ValueError('alt to withdrawal : {} is smaller than {}'
+                    .format(alt_with_amount, self.alt_with_min))
+        elif self.alt_with_daily_limit < self.alt_with_daily_amount:
+            raise ValueError('BITHUMB {} ALT today tx exceeds {} daily limit'
+                    .format(self.alt_with_daily_amount, self.alt_with_daily_limit))
 
     def transact_btc2polo(self, btc_with_amount):
         # 1. check krx_bot btc account to tx
@@ -292,13 +238,12 @@ class bithumb_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        if btc_with_amount < self.btc_with_min:
-            raise ValueError('btc to withdrawal : {} is smaller than {}'.format(btc_with_amount), self.btc_with_min)
         print("Tx BTC : BITHUMB -> POLO")
+        self.check_btc_tx_limit(btc_with_amount)
 
         btc_in_tx = btc_with_amount - self.fee_btc_tx
         self.btc_balance -= btc_with_amount
-        self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
+        self.btc_in_tx = btc_in_tx
         self.btc_with_daily_amount += btc_with_amount
         return {'time' : t, 'amount' : btc_in_tx}
 
@@ -308,13 +253,12 @@ class bithumb_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        if alt_with_amount < self.alt_with_min:
-            raise ValueError('alt to withdrawal : {} is smaller than {}'.format(alt_with_amount, self.alt_with_min))
-
         print("Tx ALT : BITHUMB -> POLO")
+        self.check_alt_tx_limit(alt_with_amount)
+
         alt_in_tx = alt_with_amount - self.fee_alt_tx
         self.alt_balance -= alt_with_amount
-        self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
+        self.alt_in_tx = alt_in_tx
         self.alt_with_daily_amount += alt_with_amount
         return {'time' : t, 'amount' : alt_in_tx}
 
@@ -329,8 +273,6 @@ class poloniex_bot:
         self.alt_name = 'BTC_'+alt_name
         self.buy_price = None
         self.sell_price = None
-        self.buy_order = 0
-        self.sell_order = 0
         self.orderbook = None
 
         self.fee_trd = 0.0025 # percentage
@@ -345,10 +287,8 @@ class poloniex_bot:
         self.alt_in_tx = 0
 
 
-        # self.btc_with_daily_amount = 0
-        # self.alt_with_daily_amount = 0
         self.usd_with_daily_amount = 0
-        self.usd_with_daily_limit = 2000 # daily $2,000.00 USD
+        self.usd_with_daily_limit = 2000 # daily $2,000.00 USD / 2nd verification 25,000 usd
         self.today = datetime.utcnow().day
 
     ## SIMULATION CODE
@@ -380,14 +320,12 @@ class poloniex_bot:
             count+=1
 
         self.buy_price = float(self.orderbook["asks"][count][0])
-        self.buy_order = count
 
         count = 0
         while(float(self.orderbook["bids"][count][1])<self.alt_onetrd_amount):
             count+=1
 
         self.sell_price = float(self.orderbook["bids"][count][0])
-        self.sell_order = count
 
     def btc2alt(self):
         btc_needed = self.alt_onetrd_amount * (self.buy_price * (1 + self.fee_trd))
@@ -411,17 +349,17 @@ class poloniex_bot:
     def eval_alt(self, alt_amount): # Evaluate alt in btc for price now.
         return alt_amount * self.sell_price * (1 - self.fee_trd)
 
-    def check_tx_limit(self):
+
+    def check_usd_tx_limit(self):
         # if day passed : init limit
-        day_server = datetime.utcnow().day
-        if (self.today != day_server  ):
+        day_server = datetime.utcnow().day # POLO follows UTC
+        if (self.today != day_server  ): # Today became Yesterday
             self.today = day_server
             self.usd_with_daily_amount = 0
-            return True
-        elif self.usd_with_daily_amount < self.usd_with_daily_limit:
-            return True
-        else:
-            return False
+            print('POLONIEX Daily USD tx limit init')
+        elif self.usd_with_daily_limit < self.usd_with_daily_amount:
+            raise ValueError('POLONIEX {} USD today tx exceeds {} daily limit'
+                    .format(self.usd_with_daily_amount, self.usd_with_daily_limit))
 
     def btcusd(self):
         ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
@@ -433,14 +371,19 @@ class poloniex_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        btc_in_tx = btc_with_amount - self.fee_btc_tx
-        if btc_in_tx < 0:
-            raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
-        print("Tx BTC : POLO -> BITHUMB")
-        self.btc_balance -= btc_with_amount
-        self.btc_in_tx = btc_in_tx # TODO : if krx recieved, this needs to be zero
-        self.usd_with_daily_amount += btc_with_amount * self.btcusd()
-        return {'time' : t, 'amount' : btc_in_tx}
+        try:
+            self.check_usd_tx_limit()
+        except ValueError as e:
+            print(e)
+        else:
+            btc_in_tx = btc_with_amount - self.fee_btc_tx
+            if btc_in_tx < 0:
+                raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
+            print("Tx BTC : POLO -> BITHUMB")
+            self.btc_balance -= btc_with_amount
+            self.btc_in_tx = btc_in_tx
+            self.usd_with_daily_amount += btc_with_amount * self.btcusd()
+            return {'time' : t, 'amount' : btc_in_tx}
 
 
     def transact_alt2krx(self, alt_with_amount):
@@ -449,15 +392,19 @@ class poloniex_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        alt_in_tx = alt_with_amount - self.fee_alt_tx
-        if alt_in_tx < 0:
-            raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
-        print("Tx ALT : POLO -> BITHUMB")
-        self.alt_balance -= alt_with_amount
-        self.alt_in_tx = alt_in_tx # TODO: krx recieved -> zero
-        self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
-        return {'time' : t, 'amount' : alt_in_tx}
-
+        try:
+            self.check_usd_tx_limit()
+        except ValueError as e:
+            print(e)
+        else:
+            alt_in_tx = alt_with_amount - self.fee_alt_tx
+            if alt_in_tx < 0:
+                raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
+            print("Tx ALT : POLO -> BITHUMB")
+            self.alt_balance -= alt_with_amount
+            self.alt_in_tx = alt_in_tx
+            self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
+            return {'time' : t, 'amount' : alt_in_tx}
 
 #################################################
 def open_order_check():

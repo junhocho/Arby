@@ -64,7 +64,7 @@ class Arby:
         self.polo_alt_tx_info = None
         self.krx_btc_tx_info = None
         self.krx_alt_tx_info = None
-        self.time_tx = 10 #15*60
+        self.time_tx = 8*60
 
 
         self.btc_init = self.btc_sum()
@@ -155,8 +155,10 @@ class Arby:
                     .format(self.krx_bot.exchange_name, self.alt_name))
             if (self.polo_bot.alt_in_tx == 0):
                 # If transaction is on going, do not transact
-                # ALT : polo -> krx
-                self.polo_alt_tx_info = self.polo_bot.transact_alt2krx(self.polo_bot.alt_balance)
+                try: # ALT : polo -> krx
+                    self.polo_alt_tx_info = self.polo_bot.transact_alt2krx(self.polo_bot.alt_balance)
+                except ValueError as e:
+                    print(e)
             success = False
 
         try:
@@ -165,8 +167,10 @@ class Arby:
             print("\tPOLO : BTC -> {} : FAILED!!!!".
                     format(self.alt_name))
             if (self.krx_bot.btc_in_tx == 0):
-                # BTC : krx -> polo
-                self.krx_btc_tx_info = self.krx_bot.transact_btc2polo(self.krx_bot.btc_balance)
+                try: # BTC : krx -> polo
+                    self.krx_btc_tx_info = self.krx_bot.transact_btc2polo(self.krx_bot.btc_balance)
+                except ValueError as e:
+                    print(e)
             success = False
         return success
 
@@ -178,8 +182,10 @@ class Arby:
             print("\tPOLO : {} -> BTC : FAILED!!!!"
                     .format(self.alt_name))
             if (self.krx_bot.alt_in_tx == 0):
-                # ALT : krx -> polo
-                self.krx_alt_tx_info = self.krx_bot.transact_alt2polo(self.krx_bot.alt_balance) # SEND all ALT
+                try: # ALT : krx -> polo
+                    self.krx_alt_tx_info = self.krx_bot.transact_alt2polo(self.krx_bot.alt_balance) # SEND all ALT
+                except ValueError as e:
+                    print(e)
             success = False
 
         try:
@@ -187,9 +193,11 @@ class Arby:
         except ValueError as e:
             print("\t{} : BTC -> {} : FAILED!!!!"
                     .format(self.krx_bot.exchange_name, self.alt_name))
-            # BTC : polo -> krx
             if (self.polo_bot.btc_in_tx == 0):
-                self.polo_btc_tx_info = self.polo_bot.transact_btc2krx(self.polo_bot.btc_balance) # SEND all BTC
+                try: # BTC : polo -> krx
+                    self.polo_btc_tx_info = self.polo_bot.transact_btc2krx(self.polo_bot.btc_balance) # SEND all BTC
+                except ValueError as e:
+                    print(e)
             success = False
         return success
 
@@ -218,21 +226,21 @@ class Arby:
                 self.polo_alt_tx_info = None
                 self.polo_bot.alt_in_tx = 0
 
-        if self.polo_btc_tx_info:
+        if self.polo_btc_tx_info: # BTC : polo -> krx
             if time.time() - self.polo_btc_tx_info['time'] > self.time_tx:
                 self.krx_bot.btc_deposit(self.polo_btc_tx_info['amount'])
                 print("BTC : POLO -> {}".format(self.krx_bot.exchange_name))
                 self.polo_btc_tx_info = None
                 self.polo_bot.btc_in_tx = 0
 
-        if self.krx_alt_tx_info:
+        if self.krx_alt_tx_info: # ALT : krx -> polo
             if time.time() - self.krx_alt_tx_info['time'] > self.time_tx:
                 self.polo_bot.alt_deposit(self.krx_alt_tx_info['amount'])
                 print("ALT : {} -> POLO".format(self.krx_bot.exchange_name))
                 self.krx_alt_tx_info = None
                 self.krx_bot.alt_in_tx = 0
 
-        if self.krx_btc_tx_info:
+        if self.krx_btc_tx_info: # BTC : polo -> krx
             if time.time() - self.krx_btc_tx_info['time'] > self.time_tx:
                 self.polo_bot.btc_deposit(self.krx_btc_tx_info['amount'])
                 print("BTC : {} -> POLO".format(self.krx_bot.exchange_name))
@@ -303,17 +311,27 @@ class Arby:
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
             #print('#################### PREMIUM ALERT ####################\a')
             #print()
-            print('\t{} :  {} -> BTC \t|\t POLO : BTC -> {}'
-                    .format(self.krx_bot.exchange_name, self.alt_name, self.alt_name))
             print('\tPREM RATIO: ', prem_pos_r * 100, ' %')
+            print('\t\t\t{}\t\t|\t\t POLO'
+                    .format(self.krx_bot.exchange_name))
+            print('\t\t{}\t->\tBTC\t|\tBTC\t->\t{}'
+                    .format(self.alt_name, self.alt_name))
+            print('\t{:10.6f}\t {:10.6f}\t|{:10.6f}\t {:10.6f}'
+                    .format(self.krx_bot.alt_balance, self.krx_bot.btc_balance, self.polo_bot.btc_balance, self.polo_bot.alt_balance))
             prem = 1
         if(prem_neg_r > threshold): # Each market threshold need comission
             #### POLO : Target -> BTC   /    BITHUMB :  BTC -> Target
             #print('#################### PREMIUM ALERT ####################\a')
             #print()
-            print('\tPOLO : {} -> BTC \t|\t {} :  BTC -> {}'.format(self.alt_name,
-                self.krx_bot.exchange_name, self.alt_name))
+            #print('\tPOLO : {} -> BTC \t|\t {} :  BTC -> {}'.format(self.alt_name,
+                #self.krx_bot.exchange_name, self.alt_name))
             print('\tPREM RATIO: ', prem_neg_r * 100, ' %')
+            print('\t\t\t{}\t\t|\t\t POLO'
+                    .format(self.krx_bot.exchange_name))
+            print('\t\t{}\t<-\tBTC\t|\tBTC\t<-\t{}'
+                    .format(self.alt_name, self.alt_name))
+            print('\t{:10.6f}\t {:10.6f}\t|{:10.6f}\t {:10.6f}'
+                    .format(self.krx_bot.alt_balance, self.krx_bot.btc_balance, self.polo_bot.btc_balance, self.polo_bot.alt_balance))
             prem = -1
         #print()
         if count%100 == 0:

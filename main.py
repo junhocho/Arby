@@ -15,15 +15,16 @@ from datetime import datetime
 import time
 # from noti.slack import SlackLogger
 
-from bots import coinone_bot, korbit_bot, bithumb_bot, poloniex_bot
+from bots import  bithumb_bot, poloniex_bot #coinone_bot, korbit_bot,
 from Arby import Arby
 
 alt_kind = 'LTC'
 krx_name = 'BITHUMB'
 exp_name = '1'
 
-threshold = 0.5 / 100.0 # 0.01
-#threshold = 1.2 / 100.0 # 0.01
+#threshold = 0.09 / 100.0 # 9000 krw # EXP
+#threshold = 0.5 / 100.0 # 0.01
+threshold = 1.3 / 100.0 # 0.01
 #t_tx = 30*60
 
 import argparse
@@ -88,14 +89,6 @@ alt_onetrd_amount_dict = {
         "XRP": 100
         }
 
-# threshold_dict = {
-#         "BTC": 1000,
-#         "ETH": 200,
-#         "LTC": 20,
-#         "DASH": 100,
-#         "ETC": 20
-#         }
-
 alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]
 polo_coin_dict = ["BTC_ETH", "BTC_ETC", "BTC_LTC", "BTC_DASH", "BTC_XRP"]
 # pform_dict = {'ETH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
@@ -119,55 +112,6 @@ exchange_count = 0
 log_file = "exchange_logs/log.csv"
 alt_kind_log_file = "exchange_logs/" + alt_kind + "_log.csv"
 alt_onetrd_amount = alt_onetrd_amount_dict[alt_kind]
-
-#time_ema = 1500/update_period
-#last_buy_price = 0
-# b_transParams_BTC = {
-#         "apiKey" : b_api_key,
-#         "secretKey" : b_api_secret,
-#         "currency" : 'BTC',
-#         "units" : amount/4
-#         }
-# 
-# b_transParams_coin = {
-#         "apiKey" : b_api_key,
-#         "secretKey" : b_api_secret,
-#         "currency" : coin,
-#         "units" : amount/4
-#         }
-# 
-# b_info_orders_Params_BTC = {
-#         "apiKey" : b_api_key,
-#         "secretKey" : b_api_secret,
-#         "currency" : 'BTC'
-#         }
-# b_info_orders_Params_coin = {
-#         "apiKey" : b_api_key,
-#         "secretKey" : b_api_secret,
-#         "currency" : coin
-#         }
-# p_info_orders_Params = {
-#         "currencyPair" : polo_coin
-#         }
-# 
-# my_krw = 0
-# my_coin = 0
-# state = False
-# ######################## FUNCTIONS ########################
-# 
-# #################################################
-# def multiplier(time_period):
-#     return 2.0 / (time_period + 1)
-# ##################################################
-# def watch_price(max_price=0, min_price=0):
-#     resp = requests.get("https://api.coinone.co.kr/trades/?currency=eth")
-#     result = resp.json()
-# 
-#     order = result["completeOrders"][-1]
-#     price = int(order["price"])
-#     date_now = datetime.fromtimestamp(int(order["timestamp"]))
-#     print("max_limit: %d\nmin_limit: %d\n" % (max_price, min_price))
-#     print("time: %s\nprice: %d\n" % (date_now, price))
 
 if krx_name == 'COINONE':
     krx_bot = coinone_bot(alt_kind, alt_onetrd_amount)
@@ -208,7 +152,9 @@ Arby.show_asset()
 time_arbstart = time.time()
 while(True):
     time_running = (time.time() - time_arbstart)/60
-    print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}".format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio , Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
+    print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}"
+            .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
+                Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
     # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
     iter_s= time.time()
 
@@ -224,7 +170,6 @@ while(True):
     #prem_alert = -1
 
 
-    # Better transactoin algo is needed
     Arby.check_transaction()
     if prem_alert == 1 or prem_alert == -1: # Prem alerted previously
         success = Arby.arbitrage(prem_alert)
