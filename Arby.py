@@ -12,26 +12,41 @@ class Arby:
         self.alt_name = krx_bot.alt_name
 
         if self.alt_name == 'XRP':
-            self.btc_polo = 0.01 *r # 3,360,000
-            self.btc_krx = 0.19 *r# 3,360,000
-            self.btc_depo_delayed = 0
-            self.krw_krx = 200000*r
-            self.alt_polo = 100*r #360
-            self.alt_krx = 100*r
+            self.polo_bot.btc_deposit(0.1)
+            self.krx_bot.btc_deposit(0.1)
+            self.polo_bot.alt_deposit(100)
+            self.krx_bot.alt_deposit(100)
+            self.krx_bot.krw_deposit(200000)
+            # self.btc_polo = 0.01 *r # 3,360,000
+            # self.btc_krx = 0.19 *r# 3,360,000
+            # self.btc_depo_delayed = 0
+            # self.krw_krx = 200000*r
+            # self.alt_polo = 100*r #360
+            # self.alt_krx = 100*r
         elif self.alt_name == 'ETH':
-            self.btc_polo = 0.01 *r # 3,360,000
-            self.btc_krx = 0.19 *r# 3,360,000
-            self.btc_depo_delayed = 0
-            self.krw_krx = 200000*r
-            self.alt_polo = 1*r
-            self.alt_krx = 1*r # 400,000
+            self.polo_bot.btc_deposit(0.1)
+            self.krx_bot.btc_deposit(0.1)
+            self.polo_bot.alt_deposit(1)
+            self.krx_bot.alt_deposit(1)
+            self.krx_bot.krw_deposit(200000)
+            # self.btc_polo = 0.01 *r # 3,360,000
+            # self.btc_krx = 0.19 *r# 3,360,000
+            # self.btc_depo_delayed = 0
+            # self.krw_krx = 200000*r
+            # self.alt_polo = 1*r
+            # self.alt_krx = 1*r # 400,000
         elif self.alt_name == 'ETC':
-            self.btc_polo = 0.01 *r # 3,360,000
-            self.btc_krx = 0.19 *r# 3,360,000
-            self.btc_depo_delayed = 0
-            self.krw_krx = 200000*r
-            self.alt_polo = 15*r
-            self.alt_krx = 15*r#26,000
+            self.polo_bot.btc_deposit(0.1)
+            self.krx_bot.btc_deposit(0.1)
+            self.polo_bot.alt_deposit(15)
+            self.krx_bot.alt_deposit(15)
+            self.krx_bot.krw_deposit(200000)
+            # self.btc_polo = 0.01 *r # 3,360,000
+            # self.btc_krx = 0.19 *r# 3,360,000
+            # self.btc_depo_delayed = 0
+            # self.krw_krx = 200000*r
+            # self.alt_polo = 15*r
+            # self.alt_krx = 15*r#26,000
         elif self.alt_name == 'LTC':
             self.polo_bot.btc_deposit(0.1)
             self.krx_bot.btc_deposit(0.1)
@@ -47,8 +62,8 @@ class Arby:
         elif self.alt_name == 'DASH':
             self.polo_bot.btc_deposit(0.1)
             self.krx_bot.btc_deposit(0.1)
-            self.polo_bot.alt_deposit(1.5)
-            self.krx_bot.alt_deposit(1.5)
+            self.polo_bot.alt_deposit(1)
+            self.krx_bot.alt_deposit(1)
             self.krx_bot.krw_deposit(200000)
             # self.btc_polo = 0.1 *r # 3,360,000
             # self.btc_krx = 0.1 *r# 3,360,000
