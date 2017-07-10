@@ -105,26 +105,22 @@ class bithumb_bot:
             self.alt_with_daily_limit = 10000 #  10000 * 60000 / 1153 = 520,000 usd
             self.alt_with_min = 0.01
         elif alt_name == 'ETH':
-            self.fee_all_tx = 0.01
-            # LTC : 1500 once / 10000 daily
+            self.fee_alt_tx = 0.01
             self.alt_with_once_limit = 250
             self.alt_with_daily_limit = 1500 #  10000 * 60000 / 1153 = 520,000 usd
             self.alt_with_min = 0.01
         elif alt_name == 'ETC':
-            self.fee_all_tx = 0.01
-            # LTC : 1500 once / 10000 daily
+            self.fee_alt_tx = 0.01
             self.alt_with_once_limit = 5000
             self.alt_with_daily_limit = 30000 #  10000 * 60000 / 1153 = 520,000 usd
             self.alt_with_min = 0.1
         elif alt_name == 'XRP':
-            self.fee_all_tx = 0.01
-            # LTC : 1500 once / 10000 daily
+            self.fee_alt_tx = 0.01
             self.alt_with_once_limit = 100000
             self.alt_with_daily_limit = 50000 #  10000 * 60000 / 1153 = 520,000 usd
             self.alt_with_min = 21
         elif alt_name == 'DASH':
-            self.fee_all_tx = 0.01
-            # LTC : 1500 once / 10000 daily
+            self.fee_alt_tx = 0.01
             self.alt_with_once_limit = 500
             self.alt_with_daily_limit = 3000 #  10000 * 60000 / 1153 = 520,000 usd
             self.alt_with_min = 0.01

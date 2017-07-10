@@ -82,6 +82,7 @@ logger.addHandler(streamHandler)
 # TODO EMA visualize
 # TODO : when arb happening. set prem direction and make tx before alt/btc shortage
 # TODO : Due to fee_alt_tx, last sell is little bit less than onetrd_amount. Just sell all left.
+# TODO : When prem exceeds, wait for reverse prem > 0 and exchange.
 
 alt_onetrd_amount_dict = {
         "BTC": 0.03,

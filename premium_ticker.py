@@ -18,8 +18,9 @@ import time
 from bots import  bithumb_bot, poloniex_bot #coinone_bot, korbit_bot,
 from Arby import Arby
 
+from multiprocessing import Pool
 
-threshold = 0.5 
+threshold = 0.5
 
 # Setup Logger
 
@@ -110,6 +111,8 @@ def wait(iter_s):
 
 
 time_arbstart = time.time()
+# pool = Pool()
+
 while(True):
     tic = time.time()
 
@@ -124,6 +127,27 @@ while(True):
         polo_dash_bot.collect_price()
         krx_xrp_bot.collect_price()
         polo_xrp_bot.collect_price()
+        # 
+        # r1 = pool.apply_async(krx_eth_bot.collect_price)
+        # r2 = pool.apply_async(polo_eth_bot.collect_price)
+        # r3 = pool.apply_async(krx_etc_bot.collect_price)
+        # r4 = pool.apply_async(polo_etc_bot.collect_price)
+        # r5 = pool.apply_async(krx_ltc_bot.collect_price)
+        # r6 = pool.apply_async(polo_ltc_bot.collect_price)
+        # r7 = pool.apply_async(krx_dash_bot.collect_price)
+        # r8 = pool.apply_async(polo_dash_bot.collect_price)
+        # r9 = pool.apply_async(krx_xrp_bot.collect_price)
+        # r10 = pool.apply_async(polo_xrp_bot.collect_price)
+        # a = r1.get(timeout=10)
+        # a = r2.get(timeout=10)
+        # a = r3.get(timeout=10)
+        # a = r4.get(timeout=10)
+        # a = r5.get(timeout=10)
+        # a = r6.get(timeout=10)
+        # a = r7.get(timeout=10)
+        # a = r8.get(timeout=10)
+        # a = r9.get(timeout=10)
+        # a = r10.get(timeout=10)
     except Exception as e:
         logger.exception("waiting next iter")
         continue
