@@ -19,7 +19,7 @@ from bots import  bithumb_bot, poloniex_bot #coinone_bot, korbit_bot,
 from Arby import Arby
 
 
-threshold = 0.5 
+threshold = 0.5
 
 # Setup Logger
 
@@ -148,4 +148,4 @@ while(True):
     #iter_s= time.time()
     #wait(iter_s)
     toc = time.time()
-    print(toc-tic)
+    print(toc-tic, datetime.now())
