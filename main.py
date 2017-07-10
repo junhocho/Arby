@@ -80,14 +80,17 @@ logger.addHandler(streamHandler)
 # TODO : Way to increase LTC
 # TODO : Use Pandas, visualize arbitrage with ticker
 # TODO EMA visualize
+# TODO : when arb happening. set prem direction and make tx before alt/btc shortage
+# TODO : Due to fee_alt_tx, last sell is little bit less than onetrd_amount. Just sell all left.
+# TODO : When prem exceeds, wait for reverse prem > 0 and exchange.
 
 alt_onetrd_amount_dict = {
         "BTC": 0.03,
-        "ETH": 0.3,
+        "ETH": 0.2,
         "LTC": 1.0,
-        "DASH": 0.6,
+        "DASH": 0.25,
         "ETC": 3.0,
-        "XRP": 100
+        "XRP": 60
         }
 
 alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]

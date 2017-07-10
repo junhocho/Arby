@@ -98,7 +98,32 @@ class bithumb_bot:
 
         self.fee_trd = 0.075 # percentage. Use coupon!
         self.fee_btc_tx = 0.0005 # BTC  1500
-        self.fee_alt_tx = 0.01 # LTC  600
+        if alt_name == 'LTC':
+            self.fee_alt_tx = 0.01 # LTC  600
+            # LTC : 1500 once / 10000 daily
+            self.alt_with_once_limit = 1500
+            self.alt_with_daily_limit = 10000 #  10000 * 60000 / 1153 = 520,000 usd
+            self.alt_with_min = 0.01
+        elif alt_name == 'ETH':
+            self.fee_alt_tx = 0.01
+            self.alt_with_once_limit = 250
+            self.alt_with_daily_limit = 1500 #  10000 * 60000 / 1153 = 520,000 usd
+            self.alt_with_min = 0.01
+        elif alt_name == 'ETC':
+            self.fee_alt_tx = 0.01
+            self.alt_with_once_limit = 5000
+            self.alt_with_daily_limit = 30000 #  10000 * 60000 / 1153 = 520,000 usd
+            self.alt_with_min = 0.1
+        elif alt_name == 'XRP':
+            self.fee_alt_tx = 0.01
+            self.alt_with_once_limit = 100000
+            self.alt_with_daily_limit = 50000 #  10000 * 60000 / 1153 = 520,000 usd
+            self.alt_with_min = 21
+        elif alt_name == 'DASH':
+            self.fee_alt_tx = 0.01
+            self.alt_with_once_limit = 500
+            self.alt_with_daily_limit = 3000 #  10000 * 60000 / 1153 = 520,000 usd
+            self.alt_with_min = 0.01
 
         self.btc_in_tx = 0
         self.alt_in_tx = 0
@@ -121,10 +146,7 @@ class bithumb_bot:
         self.btc_with_daily_limit = 150 # 150 * 3060000 / 1153 = 400,000 usd
         self.btc_with_min = 0.001
 
-        self.alt_with_daily_amount = 0 # LTC : 1500 once / 10000 daily
-        self.alt_with_once_limit = 1500
-        self.alt_with_daily_limit = 10000 #  10000 * 60000 / 1153 = 520,000 usd
-        self.alt_with_min = 0.01
+        self.alt_with_daily_amount = 0
 
         self.today = datetime.now().day
 
@@ -209,7 +231,7 @@ class bithumb_bot:
                     .format(btc_with_amount, self.btc_with_once_limit))
         elif btc_with_amount < self.btc_with_min:
             raise ValueError('btc to withdrawal : {} is smaller than {}'
-                    .format(btc_with_amount), self.btc_with_min)
+                    .format(btc_with_amount, self.btc_with_min))
         elif self.btc_with_daily_limit < self.btc_with_daily_amount:
             raise ValueError('BITHUMB {} BTC today tx exceeds {} daily limit'
                     .format(self.btc_with_daily_amount, self.btc_with_daily_limit))
@@ -371,19 +393,15 @@ class poloniex_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        try:
-            self.check_usd_tx_limit()
-        except ValueError as e:
-            print(e)
-        else:
-            btc_in_tx = btc_with_amount - self.fee_btc_tx
-            if btc_in_tx < 0:
-                raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
-            print("Tx BTC : POLO -> BITHUMB")
-            self.btc_balance -= btc_with_amount
-            self.btc_in_tx = btc_in_tx
-            self.usd_with_daily_amount += btc_with_amount * self.btcusd()
-            return {'time' : t, 'amount' : btc_in_tx}
+        self.check_usd_tx_limit()
+        btc_in_tx = btc_with_amount - self.fee_btc_tx
+        if btc_in_tx < 0:
+            raise ValueError('btc to withdrawal : {} is smaller than fee'.format(btc_with_amount))
+        print("Tx BTC : POLO -> BITHUMB")
+        self.btc_balance -= btc_with_amount
+        self.btc_in_tx = btc_in_tx
+        self.usd_with_daily_amount += btc_with_amount * self.btcusd()
+        return {'time' : t, 'amount' : btc_in_tx}
 
 
     def transact_alt2krx(self, alt_with_amount):
@@ -392,19 +410,15 @@ class poloniex_bot:
         # 3. accumulate self.btc_with_amount
         # 4. recheck balance
         t = time.time()
-        try:
-            self.check_usd_tx_limit()
-        except ValueError as e:
-            print(e)
-        else:
-            alt_in_tx = alt_with_amount - self.fee_alt_tx
-            if alt_in_tx < 0:
-                raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
-            print("Tx ALT : POLO -> BITHUMB")
-            self.alt_balance -= alt_with_amount
-            self.alt_in_tx = alt_in_tx
-            self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
-            return {'time' : t, 'amount' : alt_in_tx}
+        self.check_usd_tx_limit() # Occur ValueError
+        alt_in_tx = alt_with_amount - self.fee_alt_tx
+        if alt_in_tx < 0:
+            raise ValueError('alt to withdrawal : {} is smaller than fee'.format(alt_with_amount))
+        print("Tx ALT : POLO -> BITHUMB")
+        self.alt_balance -= alt_with_amount
+        self.alt_in_tx = alt_in_tx
+        self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
+        return {'time' : t, 'amount' : alt_in_tx}
 
 #################################################
 def open_order_check():

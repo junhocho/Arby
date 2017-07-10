@@ -14,8 +14,8 @@ class Arby:
         if self.alt_name == 'XRP':
             self.polo_bot.btc_deposit(0.1)
             self.krx_bot.btc_deposit(0.1)
-            self.polo_bot.alt_deposit(100)
-            self.krx_bot.alt_deposit(100)
+            self.polo_bot.alt_deposit(300)
+            self.krx_bot.alt_deposit(300)
             self.krx_bot.krw_deposit(200000)
             # self.btc_polo = 0.01 *r # 3,360,000
             # self.btc_krx = 0.19 *r# 3,360,000
