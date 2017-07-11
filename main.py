@@ -166,6 +166,7 @@ while(True):
         krx_bot.collect_price()
         polo_bot.collect_price()
     except Exception as e:
+        print(e)
         logger.exception("waiting next iter")
         wait(iter_s)
         continue
