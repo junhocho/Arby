@@ -63,7 +63,6 @@ alt_onetrd_amount_dict = {
 alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]
 
 
-update_period = 2 # seconds
 
 log_file = "exchange_logs/log.csv"
 
@@ -96,13 +95,11 @@ Arby_xrp = Arby(polo_xrp_bot, krx_xrp_bot)
 
 ### START arbitrage!!
 
-iter_arb = 0
+iter_ticker = 0
 
-
+update_period = 5 # seconds
 def wait(iter_s):
-    global iter_arb
     iter_duration = time.time() - iter_s
-    iter_arb+=1
     tsleep = max([update_period-iter_duration, 0])
     time.sleep(tsleep)
     iter_end = time.time()
@@ -169,7 +166,8 @@ while(True):
             .format('ALT', 'ALT' , prem_eth[0], prem_etc[0], prem_ltc[0], prem_dash[0], prem_xrp[0]))
     print('\t\t{} <- BTC\t|\tBTC <- {}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t'
             .format('ALT', 'ALT' , prem_eth[1], prem_etc[1], prem_ltc[1], prem_dash[1], prem_xrp[1]))
-    #iter_s= time.time()
-    #wait(iter_s)
+    iter_s= time.time()
+    wait(iter_s)
     toc = time.time()
     print(toc-tic)
+    iter_ticker += 1
