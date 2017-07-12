@@ -1,6 +1,7 @@
 pip install simplejson
 pip install yahoo-finance
 pip install httplib2 --upgrade
+pip install visdom
 
 mkdir log
 
