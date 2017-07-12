@@ -1,5 +1,18 @@
 #! /usr/bin/env python3
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
+from visdom import Visdom
+import numpy as np
+import math
+import os.path
+import getpass
+from sys import platform as _platform
+from six.moves import urllib
+
+viz = Visdom()
 
 #################
 ## Sell Expensive! And Buy Cheap!!
@@ -60,49 +73,30 @@ alt_onetrd_amount_dict = {
         "XRP": 100
         }
 
-alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]
+alt_list = ["ETH",  "ETC", "XRP", "LTC", "DASH"]
 
-
-update_period = 2 # seconds
 
 log_file = "exchange_logs/log.csv"
 
-krx_eth_bot = bithumb_bot('ETH', alt_onetrd_amount_dict['ETH'])
-krx_etc_bot = bithumb_bot('ETC', alt_onetrd_amount_dict['ETC'])
-krx_ltc_bot = bithumb_bot('LTC', alt_onetrd_amount_dict['LTC'])
-krx_dash_bot = bithumb_bot('DASH', alt_onetrd_amount_dict['DASH'])
-krx_xrp_bot = bithumb_bot('XRP', alt_onetrd_amount_dict['XRP'])
+krx_bots = [bithumb_bot(alt, alt_onetrd_amount_dict[alt]) for alt in alt_list]
+polo_bots = [poloniex_bot(alt, alt_onetrd_amount_dict[alt]) for alt in alt_list]
 
-polo_eth_bot = poloniex_bot('ETH', alt_onetrd_amount_dict['ETH'])
-polo_etc_bot = poloniex_bot('ETC', alt_onetrd_amount_dict['ETC'])
-polo_ltc_bot = poloniex_bot('LTC', alt_onetrd_amount_dict['LTC'])
-polo_dash_bot = poloniex_bot('DASH', alt_onetrd_amount_dict['DASH'])
-polo_xrp_bot = poloniex_bot('XRP', alt_onetrd_amount_dict['XRP'])
+for bot in polo_bots:
+    bot.collect_price()
 
-polo_eth_bot.collect_price()
-polo_etc_bot.collect_price()
-polo_ltc_bot.collect_price()
-polo_dash_bot.collect_price()
-polo_xrp_bot.collect_price()
+Arbys = [Arby(p,k) for p,k in zip(polo_bots, krx_bots)]
 
-Arby_eth = Arby(polo_eth_bot, krx_eth_bot)
-Arby_etc = Arby(polo_etc_bot, krx_etc_bot)
-Arby_ltc = Arby(polo_ltc_bot, krx_ltc_bot)
-Arby_dash = Arby(polo_dash_bot, krx_dash_bot)
-Arby_xrp = Arby(polo_xrp_bot, krx_xrp_bot)
 
 #################################################
 
 
 ### START arbitrage!!
 
-iter_arb = 0
+iter_ticker = 0
 
-
+update_period = 5 # seconds
 def wait(iter_s):
-    global iter_arb
     iter_duration = time.time() - iter_s
-    iter_arb+=1
     tsleep = max([update_period-iter_duration, 0])
     time.sleep(tsleep)
     iter_end = time.time()
@@ -113,63 +107,66 @@ def wait(iter_s):
 time_arbstart = time.time()
 # pool = Pool()
 
+wins_prem_monitor = [None, None, None, None, None]
+wins_price_ticker = [None, None, None, None, None]
+
+premiums = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
+Ys_pos = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
+Ys_neg = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
+Ys_polo_pirce = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
+Ys_krx_price= [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
+Ys_prems2show = [1,2,3,4,5]
+Ys_price2show = [6,7,8,9,0]
+
+X = np.column_stack((np.arange(0), np.arange(0)))
+
 while(True):
     tic = time.time()
 
     try:
-        krx_eth_bot.collect_price()
-        polo_eth_bot.collect_price()
-        krx_etc_bot.collect_price()
-        polo_etc_bot.collect_price()
-        krx_ltc_bot.collect_price()
-        polo_ltc_bot.collect_price()
-        krx_dash_bot.collect_price()
-        polo_dash_bot.collect_price()
-        krx_xrp_bot.collect_price()
-        polo_xrp_bot.collect_price()
-        # 
-        # r1 = pool.apply_async(krx_eth_bot.collect_price)
-        # r2 = pool.apply_async(polo_eth_bot.collect_price)
-        # r3 = pool.apply_async(krx_etc_bot.collect_price)
-        # r4 = pool.apply_async(polo_etc_bot.collect_price)
-        # r5 = pool.apply_async(krx_ltc_bot.collect_price)
-        # r6 = pool.apply_async(polo_ltc_bot.collect_price)
-        # r7 = pool.apply_async(krx_dash_bot.collect_price)
-        # r8 = pool.apply_async(polo_dash_bot.collect_price)
-        # r9 = pool.apply_async(krx_xrp_bot.collect_price)
-        # r10 = pool.apply_async(polo_xrp_bot.collect_price)
-        # a = r1.get(timeout=10)
-        # a = r2.get(timeout=10)
-        # a = r3.get(timeout=10)
-        # a = r4.get(timeout=10)
-        # a = r5.get(timeout=10)
-        # a = r6.get(timeout=10)
-        # a = r7.get(timeout=10)
-        # a = r8.get(timeout=10)
-        # a = r9.get(timeout=10)
-        # a = r10.get(timeout=10)
+        for k,p in zip(krx_bots, polo_bots):
+            k.collect_price()
+            p.collect_price()
     except Exception as e:
         logger.exception("waiting next iter")
         continue
-    prem_eth = Arby_eth.ticker_premium(threshold)
-    prem_etc = Arby_etc.ticker_premium(threshold)
-    prem_ltc = Arby_ltc.ticker_premium(threshold)
-    prem_dash = Arby_dash.ticker_premium(threshold)
-    prem_xrp = Arby_xrp.ticker_premium(threshold)
+    else:
+        for _, arby in enumerate(Arbys):
+            premiums[_] = arby.ticker_premium(threshold)
+        for i in range(5):
+            Ys_pos[i] = np.append(Ys_pos[i], premiums[i][0])
+            Ys_neg[i] = np.append(Ys_neg[i], premiums[i][1])
+            Ys_polo_pirce[i] = np.append(Ys_polo_pirce[i], (polo_bots[i].sell_price + polo_bots[i].buy_price)/2)
+            Ys_krx_price[i] = np.append(Ys_krx_price[i], (krx_bots[i].sell_price + krx_bots[i].buy_price)/2)
 
-    # Arby_eth.calculate_premium(iter_arb, threshold)
-    # Arby_etc.calculate_premium(iter_arb, threshold)
-    # Arby_ltc.calculate_premium(iter_arb, threshold)
-    # Arby_dash.calculate_premium(iter_arb, threshold)
-    # Arby_xrp.calculate_premium(iter_arb, threshold)
+            Ys_prems2show[i] = np.column_stack((Ys_pos[i], Ys_neg[i]))
+            Ys_price2show[i] = np.column_stack((Ys_polo_pirce[i], Ys_krx_price[i]))
 
-    print('\t\t{}\t\t|\tPOLO\t\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t'
-            .format('BITHUMB', 'ETH','ETC','LTC','DASH','XRP'))
-    print('\t\t{} -> BTC\t|\tBTC -> {}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t'
-            .format('ALT', 'ALT' , prem_eth[0], prem_etc[0], prem_ltc[0], prem_dash[0], prem_xrp[0]))
-    print('\t\t{} <- BTC\t|\tBTC <- {}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t'
-            .format('ALT', 'ALT' , prem_eth[1], prem_etc[1], prem_ltc[1], prem_dash[1], prem_xrp[1]))
-    #iter_s= time.time()
-    #wait(iter_s)
+        for i in range(5):
+            wins_prem_monitor[i] = viz.line(
+                Y = Ys_prems2show[i],
+                win = wins_prem_monitor[i],
+                opts =dict(
+                    title = alt_list[i],
+                    legend = ['+', '-']
+                )
+            )
+        for i in range(5):
+            wins_price_ticker[i] = viz.line(
+                Y = Ys_price2show[i],
+                win = wins_price_ticker[i],
+                opts =dict(
+                    title = alt_list[i]+' sell price',
+                    legend = ['polo', 'bith'])
+            )
+
+    # print('\t\t{}\t\t|\tPOLO\t\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t'
+    #         .format('BITHUMB', 'ETH','ETC','LTC','DASH','XRP'))
+    # print('\t\t{} -> BTC\t|\tBTC -> {}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t'
+    #         .format('ALT', 'ALT' , prem_eth[0], prem_etc[0], prem_ltc[0], prem_dash[0], prem_xrp[0]))
+    # print('\t\t{} <- BTC\t|\tBTC <- {}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t|\t{:5.2f}\t'
+    #         .format('ALT', 'ALT' , prem_eth[1], prem_etc[1], prem_ltc[1], prem_dash[1], prem_xrp[1]))
+    wait(tic)
     toc = time.time()
     print(toc-tic, datetime.now())
+    iter_ticker += 1
