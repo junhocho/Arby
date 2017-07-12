@@ -73,17 +73,17 @@ alt_onetrd_amount_dict = {
         "XRP": 100
         }
 
-alt_kind_dict = ["BTC", "ETH", "LTC", "DASH", "ETC", "XRP"]
-
+alt_list = ["ETH",  "ETC", "XRP", "LTC", "DASH"]
 
 
 log_file = "exchange_logs/log.csv"
 
-krx_eth_bot = bithumb_bot('ETH', alt_onetrd_amount_dict['ETH'])
-krx_etc_bot = bithumb_bot('ETC', alt_onetrd_amount_dict['ETC'])
-krx_ltc_bot = bithumb_bot('LTC', alt_onetrd_amount_dict['LTC'])
-krx_dash_bot = bithumb_bot('DASH', alt_onetrd_amount_dict['DASH'])
-krx_xrp_bot = bithumb_bot('XRP', alt_onetrd_amount_dict['XRP'])
+krx_bots = [bithumb_bot(alt, alt_onetrd_amount_dict[alt]) for alt in alt_list]
+#krx_eth_bot = bithumb_bot('ETH', alt_onetrd_amount_dict['ETH'])
+#krx_etc_bot = bithumb_bot('ETC', alt_onetrd_amount_dict['ETC'])
+#krx_ltc_bot = bithumb_bot('LTC', alt_onetrd_amount_dict['LTC'])
+#krx_dash_bot = bithumb_bot('DASH', alt_onetrd_amount_dict['DASH'])
+#krx_xrp_bot = bithumb_bot('XRP', alt_onetrd_amount_dict['XRP'])
 
 polo_eth_bot = poloniex_bot('ETH', alt_onetrd_amount_dict['ETH'])
 polo_etc_bot = poloniex_bot('ETC', alt_onetrd_amount_dict['ETC'])

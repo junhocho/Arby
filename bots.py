@@ -310,7 +310,7 @@ class poloniex_bot:
 
 
         self.usd_with_daily_amount = 0
-        self.usd_with_daily_limit = 2000 # daily $2,000.00 USD / 2nd verification 25,000 usd
+        self.usd_with_daily_limit = 25000 # daily $2,000.00 USD / 2nd verification 25,000 usd
         self.today = datetime.utcnow().day
 
     ## SIMULATION CODE
