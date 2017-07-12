@@ -103,6 +103,11 @@ class Arby:
         # self.polo_btc_trade_amount = 0 # in BTC
         # self.krx_krw_trade_amount = 0 # in KRW
 
+    def refresh(self):
+        btcsum = self.asset_in_btc()
+        self.total_ratio = btcsum / self.asset_init
+        self.btc_ratio = self.btc_sum() / self.btc_init
+        self.alt_ratio = self.alt_sum() / self.alt_init
 
 
     def btc_sum(self):
@@ -234,12 +239,14 @@ class Arby:
         return success
 
     def check_transaction(self):
+        refr = False
         if self.polo_alt_tx_info: # ALT : polo -> krx
             if time.time() - self.polo_alt_tx_info['time']  > self.time_tx:
                 self.krx_bot.alt_deposit(self.polo_alt_tx_info['amount'])
                 print("ALT : POLO -> {}".format(self.krx_bot.exchange_name))
                 self.polo_alt_tx_info = None
                 self.polo_bot.alt_in_tx = 0
+                refr = True
 
         if self.polo_btc_tx_info: # BTC : polo -> krx
             if time.time() - self.polo_btc_tx_info['time'] > self.time_tx:
@@ -247,6 +254,7 @@ class Arby:
                 print("BTC : POLO -> {}".format(self.krx_bot.exchange_name))
                 self.polo_btc_tx_info = None
                 self.polo_bot.btc_in_tx = 0
+                refr = True
 
         if self.krx_alt_tx_info: # ALT : krx -> polo
             if time.time() - self.krx_alt_tx_info['time'] > self.time_tx:
@@ -254,6 +262,7 @@ class Arby:
                 print("ALT : {} -> POLO".format(self.krx_bot.exchange_name))
                 self.krx_alt_tx_info = None
                 self.krx_bot.alt_in_tx = 0
+                refr = True
 
         if self.krx_btc_tx_info: # BTC : polo -> krx
             if time.time() - self.krx_btc_tx_info['time'] > self.time_tx:
@@ -261,6 +270,8 @@ class Arby:
                 print("BTC : {} -> POLO".format(self.krx_bot.exchange_name))
                 self.krx_btc_tx_info = None
                 self.krx_bot.btc_in_tx = 0
+                refr = True
+        return refr
 
 
     # def asset_reallocate(self): # Done instantly. Naive version.

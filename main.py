@@ -84,7 +84,8 @@ logger.addHandler(streamHandler)
 # TODO : Due to fee_alt_tx, last sell is little bit less than onetrd_amount. Just sell all left.
 # TODO : When prem exceeds, wait for reverse prem > 0 and exchange.
 # TODO : USD limit reached, gets over at final with.
-
+# TODO : alt_in_tx, btc_in_tx   visualize
+# TODO : visualize with visdom
 alt_onetrd_amount_dict = {
         "BTC": 0.03,
         "ETH": 0.2,
@@ -101,7 +102,7 @@ polo_coin_dict = ["BTC_ETH", "BTC_ETC", "BTC_LTC", "BTC_DASH", "BTC_XRP"]
 #         'DASH' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
 #         'ETC' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}',
 #         'XRP' : '{:12}:\t  BUY : {:10.12f} \t SELL: {:10.12f}'}
-# 
+#
 # pform = pform_dict[alt_kind]
 
 # Threshold for gap price
@@ -156,11 +157,7 @@ Arby.show_asset()
 
 time_arbstart = time.time()
 while(True):
-    time_running = (time.time() - time_arbstart)/60
-    print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}"
-            .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
-                Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
-    # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
+
     iter_s= time.time()
 
     try:
@@ -176,16 +173,27 @@ while(True):
     #prem_alert = -1
 
 
-    Arby.check_transaction()
+    refr = Arby.check_transaction()
     if prem_alert == 1 or prem_alert == -1: # Prem alerted previously
         success = Arby.arbitrage(prem_alert)
         if success: Arby.show_asset()
         prem_alert = 0
+        time_running = (time.time() - time_arbstart)/60
+        print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}"
+                .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
+                    Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
+    elif refr:
+        Arby.refresh()
+        time_running = (time.time() - time_arbstart)/60
+        print("{} {} {:6} {:6.0f}m {:10.4f}  {:10.4f}  {:10.4f}  {}"
+                .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
+                    Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
+        # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
 
     # Tx between polo and krx
     # if Arby.btc_depo_delayed > 0: # In tx
     #     #print(time.time() - t_with , "waiting depo...")
-    #     if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower. 
+    #     if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower.
     #         Arby.transact_btc_done(tx_method)
     #         print("TX Done!")
     #         Arby.reallo += 1
