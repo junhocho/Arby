@@ -108,6 +108,7 @@ time_arbstart = time.time()
 
 wins_prem_monitor = [None, None, None, None, None]
 wins_price_ticker = [None, None, None, None, None]
+win_krx_btc_price = None
 
 premiums = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
 Ys_pos = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
@@ -133,6 +134,7 @@ while(True):
     except Exception as e:
         logger.exception("waiting next iter")
     else:
+        krx_btc_price = np.array([(krx_bots[2].btckrw_sell_price +krx_bots[2].btckrw_buy_price)/2]) # TODO : choose middle crawled time
         for i, arby in enumerate(Arbys):
             premiums[i] = arby.ticker_premium(threshold)
             polo_price[i] = (polo_bots[i].sell_price + polo_bots[i].buy_price)/2
@@ -146,7 +148,8 @@ while(True):
             Ys_prems2show[i] = np.column_stack((Ys_pos[i], Ys_neg[i]))
             Ys_price2show[i] = np.column_stack((Ys_polo_pirce[i], Ys_krx_price[i]))
 
-        X = np.column_stack((np.array(time_stamp), np.array(time_stamp)))
+        curr_time = np.array([time_stamp/60.]) # per minute
+        X = np.column_stack((curr_time, curr_time))
         # TODO : global timestamp how to append
         if iter_ticker ==  0:
             for i in range(5):
@@ -165,8 +168,16 @@ while(True):
                     Y = Ys_price2show[i],
                     win = wins_price_ticker[i],
                     opts =dict(
-                        title = alt_list[i]+' sell price',
+                        title = alt_list[i]+' price',
                         legend = ['polo', 'bith'])
+                )
+
+
+            win_krx_btc_price = viz.line(
+                    X = curr_time,
+                    Y = krx_btc_price,
+                    win = win_krx_btc_price,
+                    opts = dict(title = 'BTC price')
                 )
         else:
             for i in range(5):
@@ -183,6 +194,13 @@ while(True):
                     Y = Y,
                     win = wins_price_ticker[i],
                 )
+
+            viz.updateTrace(
+                X = curr_time,
+                Y = krx_btc_price,
+                win = win_krx_btc_price,
+            )
+
 
     # print('\t\t{}\t\t|\tPOLO\t\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t|\t{}\t'
     #         .format('BITHUMB', 'ETH','ETC','LTC','DASH','XRP'))
