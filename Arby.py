@@ -416,10 +416,9 @@ class Arby:
         self.Y_polo_btcusd_price = np.append(self.Y_polo_btcusd_price,
                 np.array([btcusd]))
 
+        self.time_stamp = time.time() - self.time_init
         try:
-
-            time_stamp = time.time() - self.time_init
-            curr_time = np.array([time_stamp/60.]) # per minute
+            curr_time = np.array([self.time_stamp/60.]) # per minute
             # ALTBTC
             X = np.column_stack((curr_time, curr_time))
             Y = np.column_stack((
@@ -451,10 +450,6 @@ class Arby:
         except ImportError:
             print('Visdom not imported')
 
-    def ticker_premium(self, threhold):
-        prem_pos_r = (self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1) * 100
-        prem_neg_r = (self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1) * 100
-        return (prem_pos_r, prem_neg_r)
     def calculate_premium_(self, threshold):
         prem_pos_r = self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1
         prem_neg_r = self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1
@@ -514,9 +509,7 @@ class Arby:
         self.Y_prem_neg = np.append(self.Y_prem_neg, prem_neg_r)
         ## Needs visdom
         try:
-
-            time_stamp = time.time() - self.time_init
-            curr_time = np.array([time_stamp/60.]) # per minute
+            curr_time = np.array([self.time_stamp/60.]) # per minute
             X = np.column_stack((curr_time, curr_time))
 
             Y = np.column_stack((

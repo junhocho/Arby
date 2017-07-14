@@ -144,7 +144,7 @@ while(True):
     else:
         krx_btc_price = np.array([(krx_bots[2].btckrw_sell_price +krx_bots[2].btckrw_buy_price)/2]) # TODO : choose middle crawled time
         for i, arby in enumerate(Arbys):
-            premiums[i] = arby.ticker_premium(threshold)
+            premiums[i] = arby.calculate_premium_(threshold)
             polo_price[i] = (polo_bots[i].sell_price + polo_bots[i].buy_price)/2
             krx_price[i] = (krx_bots[i].sell_price + krx_bots[i].buy_price)/2
         for i in range(5):
