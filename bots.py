@@ -387,7 +387,12 @@ class poloniex_bot:
                     .format(self.usd_with_daily_amount, self.usd_with_daily_limit))
 
     def btcusd(self):
-        ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
+        ret = None
+        while(not ret): # if ret not returned return it until returned
+            try:
+                ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
+            except Exception:
+                ret = None
         return int(json.loads(ret.read())['result']['price'])
 
     def transact_btc2krx(self, btc_with_amount):
