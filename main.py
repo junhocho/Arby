@@ -178,7 +178,6 @@ while(True):
 
         Arby.collect_price()
     except Exception as e:
-        print("waiting next iter")
         wait(iter_s)
         continue
 
