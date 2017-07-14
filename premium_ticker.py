@@ -32,8 +32,15 @@ from bots import  bithumb_bot, poloniex_bot #coinone_bot, korbit_bot,
 from Arby import Arby
 
 from multiprocessing import Pool
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--alt_kind', default='LTC')
+param = parser.parse_args()
 threshold = 0.5
+
+#alt_list = ["ETH",  "ETC", "XRP", "LTC", "DASH"]
+alt_list = [param.alt_kind]
 
 # Setup Logger
 
@@ -73,7 +80,6 @@ alt_onetrd_amount_dict = {
         "XRP": 100
         }
 
-alt_list = ["ETH",  "ETC", "XRP", "LTC", "DASH"]
 
 
 log_file = "exchange_logs/log.csv"
@@ -93,7 +99,7 @@ Arbys = [Arby(p,k) for p,k in zip(polo_bots, krx_bots)]
 ### START arbitrage!!
 
 
-update_period = 5 # seconds
+update_period = 2 # seconds
 def wait(iter_s):
     iter_duration = time.time() - iter_s
     tsleep = max([update_period-iter_duration, 0])
@@ -148,6 +154,7 @@ while(True):
             Ys_prems2show[i] = np.column_stack((Ys_pos[i], Ys_neg[i]))
             Ys_price2show[i] = np.column_stack((Ys_polo_pirce[i], Ys_krx_price[i]))
 
+        # TODO : time_stamp is actually not current time....
         curr_time = np.array([time_stamp/60.]) # per minute
         X = np.column_stack((curr_time, curr_time))
         # TODO : global timestamp how to append
