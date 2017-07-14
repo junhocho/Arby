@@ -106,103 +106,107 @@ class Arby:
         self.reallo = 0
 
         ## Collect price
-        self.collect_price_()
-        prem = self.calculate_premium_(1000000) # impossible threshold
-        self.time_init = time.time()
-
-        ## Values to log INIT
-        self.Y_prem_pos = np.array([prem[0]])
-        self.Y_prem_neg = np.array([prem[1]])
-        self.Y_krx_altkrw_sell_price = np.array([self.krx_bot.altkrw_sell_price])
-        self.Y_krx_altkrw_buy_price = np.array([self.krx_bot.altkrw_buy_price])
-        self.Y_krx_btckrw_sell_price = np.array([self.krx_bot.btckrw_sell_price])
-        self.Y_krx_btckrw_buy_price = np.array([self.krx_bot.btckrw_buy_price])
-        self.Y_krx_sell_price = np.array([self.krx_bot.sell_price])
-        self.Y_krx_buy_price = np.array([self.krx_bot.buy_price])
-        self.Y_polo_sell_price = np.array([self.polo_bot.sell_price])
-        self.Y_polo_buy_price = np.array([self.polo_bot.buy_price])
-        self.Y_polo_btcusd_price = np.array([self.polo_bot.btcusd()])
-
-        #Ys_prems2show = [1,2,3,4,5]
-        #Ys_price2show = [6,7,8,9,0]
-        #polo_price = [1,2,3,4,5]
-        #krx_price = [1,2,3,4,5]
-
-        ## Needs Visdom
         try:
-            from visdom import Visdom
-            self.viz = Visdom()
-            self.viz.env = self.alt_name
-            self.win_prem_ticker = None
-            self.win_altbtc_ticker = None
-            self.win_altkrw_ticker = None
-            self.win_btckrw_ticker = None
-            self.win_btcusd_ticker = None
+            self.collect_price_()
+        except KeyError as e:
+            print("Failed collect price ")
+        else:
+            prem = self.calculate_premium_(1000000) # impossible threshold
+            self.time_init = time.time()
 
-            self.viz.close(win = self.win_prem_ticker)
-            self.viz.close(win = self.win_altbtc_ticker)
-            self.viz.close(win = self.win_altkrw_ticker)
-            self.viz.close(win = self.win_btckrw_ticker)
-            self.viz.close(win = self.win_btcusd_ticker)
+            ## Values to log INIT
+            self.Y_prem_pos = np.array([prem[0]])
+            self.Y_prem_neg = np.array([prem[1]])
+            self.Y_krx_altkrw_sell_price = np.array([self.krx_bot.altkrw_sell_price])
+            self.Y_krx_altkrw_buy_price = np.array([self.krx_bot.altkrw_buy_price])
+            self.Y_krx_btckrw_sell_price = np.array([self.krx_bot.btckrw_sell_price])
+            self.Y_krx_btckrw_buy_price = np.array([self.krx_bot.btckrw_buy_price])
+            self.Y_krx_sell_price = np.array([self.krx_bot.sell_price])
+            self.Y_krx_buy_price = np.array([self.krx_bot.buy_price])
+            self.Y_polo_sell_price = np.array([self.polo_bot.sell_price])
+            self.Y_polo_buy_price = np.array([self.polo_bot.buy_price])
+            self.Y_polo_btcusd_price = np.array([self.polo_bot.btcusd()])
 
-            time_stamp = time.time() - self.time_init
-            curr_time = np.array([time_stamp/60.]) # per minute
-            X = np.column_stack((curr_time, curr_time))
+            #Ys_prems2show = [1,2,3,4,5]
+            #Ys_price2show = [6,7,8,9,0]
+            #polo_price = [1,2,3,4,5]
+            #krx_price = [1,2,3,4,5]
 
-            # PREM
-            self.win_prem_ticker = self.viz.line(
-                    X = X,
-                    Y = np.column_stack((
-                        self.Y_prem_pos * 100,
-                        self.Y_prem_neg * 100)),
-                    win = self.win_prem_ticker,
-                    opts =dict(
-                        title = self.alt_name + ' Premium in BTC',
-                        legend = ['+ : krx > polo', '- : polo > krx']
+            ## Needs Visdom
+            try:
+                from visdom import Visdom
+                self.viz = Visdom()
+                self.viz.env = self.alt_name
+                self.win_prem_ticker = None
+                self.win_altbtc_ticker = None
+                self.win_altkrw_ticker = None
+                self.win_btckrw_ticker = None
+                self.win_btcusd_ticker = None
+
+                self.viz.close(win = self.win_prem_ticker)
+                self.viz.close(win = self.win_altbtc_ticker)
+                self.viz.close(win = self.win_altkrw_ticker)
+                self.viz.close(win = self.win_btckrw_ticker)
+                self.viz.close(win = self.win_btcusd_ticker)
+
+                time_stamp = time.time() - self.time_init
+                curr_time = np.array([time_stamp/60.]) # per minute
+                X = np.column_stack((curr_time, curr_time))
+
+                # PREM
+                self.win_prem_ticker = self.viz.line(
+                        X = X,
+                        Y = np.column_stack((
+                            self.Y_prem_pos * 100,
+                            self.Y_prem_neg * 100)),
+                        win = self.win_prem_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Premium in BTC',
+                            legend = ['+ : krx > polo', '- : polo > krx']
+                            )
                         )
-                    )
-            # ALTBTC
-            Y =  np.column_stack((
-                        (self.Y_polo_buy_price + self.Y_polo_sell_price)/2,
-                        (self.Y_krx_buy_price + self.Y_krx_sell_price)/2))
+                # ALTBTC
+                Y =  np.column_stack((
+                            (self.Y_polo_buy_price + self.Y_polo_sell_price)/2,
+                            (self.Y_krx_buy_price + self.Y_krx_sell_price)/2))
 
-            self.win_altbtc_ticker = self.viz.line(
-                    X = X,
-                    Y = Y,
-                    win = self.win_altbtc_ticker,
-                    opts =dict(
-                        title = self.alt_name + ' Price in BTC',
-                        legend = ['POLONIEX', 'BITHUMB'])
-                    )
-            # ALTKRW
-            self.win_altkrw_ticker = self.viz.line(
-                    X = curr_time,
-                    Y = np.array([(self.krx_bot.altkrw_buy_price + self.krx_bot.altkrw_buy_price)/2]),
-                    win = self.win_altkrw_ticker,
-                    opts =dict(
-                        title = self.alt_name + ' Price in KRW',
-                        legend = ['BITHUMB'])
-                    )
-            # BTCKRW
-            self.win_btckrw_ticker = self.viz.line(
-                    X = curr_time,
-                    Y = np.array([(self.krx_bot.btckrw_buy_price + self.krx_bot.btckrw_buy_price)/2]),
-                    win = self.win_btckrw_ticker,
-                    opts =dict(
-                        title = 'BTC Price in KRW',
-                        legend = ['BITHUMB'])
-                    )
-            # BTCUSD
-            self.win_btcusd_ticker = self.viz.line(
-                    X = curr_time,
-                    Y = np.array([self.polo_bot.btcusd()]),
-                    win = self.win_btcusd_ticker,
-                    opts =dict(
-                        title = 'BTC Price in USD',
-                        legend = ['POLONIEX'])
-                    )
-        except ImportError:
-           print('visdom not imported')
+                self.win_altbtc_ticker = self.viz.line(
+                        X = X,
+                        Y = Y,
+                        win = self.win_altbtc_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Price in BTC',
+                            legend = ['POLONIEX', 'BITHUMB'])
+                        )
+                # ALTKRW
+                self.win_altkrw_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([(self.krx_bot.altkrw_buy_price + self.krx_bot.altkrw_buy_price)/2]),
+                        win = self.win_altkrw_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Price in KRW',
+                            legend = ['BITHUMB'])
+                        )
+                # BTCKRW
+                self.win_btckrw_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([(self.krx_bot.btckrw_buy_price + self.krx_bot.btckrw_buy_price)/2]),
+                        win = self.win_btckrw_ticker,
+                        opts =dict(
+                            title = 'BTC Price in KRW',
+                            legend = ['BITHUMB'])
+                        )
+                # BTCUSD
+                self.win_btcusd_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([self.polo_bot.btcusd()]),
+                        win = self.win_btcusd_ticker,
+                        opts =dict(
+                            title = 'BTC Price in USD',
+                            legend = ['POLONIEX'])
+                        )
+            except ImportError:
+               print('visdom not imported')
 
 
 

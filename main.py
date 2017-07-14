@@ -46,9 +46,10 @@ import logging
 import logging.handlers
 
 logger = logging.getLogger('crumbs')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 
 logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 #formatter
@@ -177,8 +178,7 @@ while(True):
 
         Arby.collect_price()
     except Exception as e:
-        print(e)
-        logger.exception("waiting next iter")
+        print("waiting next iter")
         wait(iter_s)
         continue
 
