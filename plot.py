@@ -36,3 +36,6 @@ win = viz.line(
 )
 
 
+import pandas as pd
+df = pd.DataFrame(np.random.rand(10))
+df.to_csv("file_path.csv")

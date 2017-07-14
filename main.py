@@ -86,6 +86,8 @@ logger.addHandler(streamHandler)
 # TODO : USD limit reached, gets over at final with.
 # TODO : alt_in_tx, btc_in_tx   visualize
 # TODO : visualize with visdom
+# TODO : avoid pending. Use LTC / DASH ? fast transactions
+# TODO : check daily transaction limit in check_transaction
 alt_onetrd_amount_dict = {
         "BTC": 0.03,
         "ETH": 0.2,
@@ -161,6 +163,18 @@ while(True):
     iter_s= time.time()
 
     try:
+        ## TODO : Log parameters.
+        #krx_bot.altkrw_buy_price
+        #krx_bot.altkrw_sell_price
+        #krx_bot.btckrw_buy_price
+        #krx_bot.btckrw_sell_price
+        #krx_bot.buy_price
+        #krx_bot.sell_price
+        #polo_bot.sell_price
+        #polo_bot.buy_price
+        #polo_bot.btcusdt_buy_price <-- add more
+        #polo_bot.btcusdt_sell_price
+
         krx_bot.collect_price()
         polo_bot.collect_price()
     except Exception as e:

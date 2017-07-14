@@ -25,6 +25,9 @@ p_api = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 # 0.00%   0.08%   ≥ 60,000 BTC
 # 0.00%   0.05%   ≥ 120,000 BTC
 
+#  OKcoin # https://www.okcoin.com/user/foreignIndex.do?random=18
+# 	Level 0	Level 1	Level 2
+# 200BTC 5000LTC 1000ETH
 
 # BITHUMB : MAKER/TAKER 0.15 %
 # 0.0005 BTC
