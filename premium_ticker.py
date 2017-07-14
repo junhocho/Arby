@@ -114,7 +114,11 @@ time_arbstart = time.time()
 
 wins_prem_monitor = [None, None, None, None, None]
 wins_price_ticker = [None, None, None, None, None]
-win_krx_btc_price = None
+win_btc_price = [None, None]
+
+for w in wins_prem_monitor + wins_price_ticker + win_btc_price:
+    viz.close(win=w)
+
 
 premiums = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
 Ys_pos = [np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0),np.zeros(0)]
@@ -125,6 +129,10 @@ Ys_prems2show = [1,2,3,4,5]
 Ys_price2show = [6,7,8,9,0]
 polo_price = [1,2,3,4,5]
 krx_price = [1,2,3,4,5]
+
+
+def ticker():
+    pass
 
 
 iter_ticker = 0
@@ -180,10 +188,10 @@ while(True):
                 )
 
 
-            win_krx_btc_price = viz.line(
+            win_btc_price[0] = viz.line(
                     X = curr_time,
                     Y = krx_btc_price,
-                    win = win_krx_btc_price,
+                    win = win_btc_price[0],
                     opts = dict(title = 'BTC price')
                 )
         else:
@@ -205,7 +213,7 @@ while(True):
             viz.updateTrace(
                 X = curr_time,
                 Y = krx_btc_price,
-                win = win_krx_btc_price,
+                win = win_btc_price[0],
             )
 
 

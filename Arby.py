@@ -2,6 +2,12 @@ from yahoo_finance import Currency
 import urllib.request
 import time
 
+import numpy as np
+
+def to_unix_time(dt):
+    epoch =  datetime.datetime.utcfromtimestamp(0)
+    return (dt - epoch).total_seconds() * 1000
+
 ## TODO Better init.
 # ETC ETH XRP: BTC in krx. ALT in polo
 class Arby:
@@ -79,7 +85,7 @@ class Arby:
         self.polo_alt_tx_info = None
         self.krx_btc_tx_info = None
         self.krx_alt_tx_info = None
-        self.time_tx = 8*60
+        self.delay_tx = 8*60
 
 
         self.btc_init = self.btc_sum()
@@ -99,16 +105,116 @@ class Arby:
         self.prem_neg_failed = 0
         self.reallo = 0
 
+        ## Collect price
+        try:
+            self.collect_price_()
+        except KeyError as e:
+            print("Failed collect price ")
+        else:
+            prem = self.calculate_premium_(1000000) # impossible threshold
+            self.time_init = time.time()
 
-        # self.polo_btc_trade_amount = 0 # in BTC
-        # self.krx_krw_trade_amount = 0 # in KRW
+            ## Values to log INIT
+            self.Y_prem_pos = np.array([prem[0]])
+            self.Y_prem_neg = np.array([prem[1]])
+            self.Y_krx_altkrw_sell_price = np.array([self.krx_bot.altkrw_sell_price])
+            self.Y_krx_altkrw_buy_price = np.array([self.krx_bot.altkrw_buy_price])
+            self.Y_krx_btckrw_sell_price = np.array([self.krx_bot.btckrw_sell_price])
+            self.Y_krx_btckrw_buy_price = np.array([self.krx_bot.btckrw_buy_price])
+            self.Y_krx_sell_price = np.array([self.krx_bot.sell_price])
+            self.Y_krx_buy_price = np.array([self.krx_bot.buy_price])
+            self.Y_polo_sell_price = np.array([self.polo_bot.sell_price])
+            self.Y_polo_buy_price = np.array([self.polo_bot.buy_price])
+            self.Y_polo_btcusd_price = np.array([self.polo_bot.btcusd()])
+
+            #Ys_prems2show = [1,2,3,4,5]
+            #Ys_price2show = [6,7,8,9,0]
+            #polo_price = [1,2,3,4,5]
+            #krx_price = [1,2,3,4,5]
+
+            ## Needs Visdom
+            try:
+                from visdom import Visdom
+                self.viz = Visdom()
+                self.viz.env = self.alt_name
+                self.win_prem_ticker = None
+                self.win_altbtc_ticker = None
+                self.win_altkrw_ticker = None
+                self.win_btckrw_ticker = None
+                self.win_btcusd_ticker = None
+
+                self.viz.close(win = self.win_prem_ticker)
+                self.viz.close(win = self.win_altbtc_ticker)
+                self.viz.close(win = self.win_altkrw_ticker)
+                self.viz.close(win = self.win_btckrw_ticker)
+                self.viz.close(win = self.win_btcusd_ticker)
+
+                time_stamp = time.time() - self.time_init
+                curr_time = np.array([time_stamp/60.]) # per minute
+                X = np.column_stack((curr_time, curr_time))
+
+                # PREM
+                self.win_prem_ticker = self.viz.line(
+                        X = X,
+                        Y = np.column_stack((
+                            self.Y_prem_pos * 100,
+                            self.Y_prem_neg * 100)),
+                        win = self.win_prem_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Premium in BTC',
+                            legend = ['+ : krx > polo', '- : polo > krx']
+                            )
+                        )
+                # ALTBTC
+                Y =  np.column_stack((
+                            (self.Y_polo_buy_price + self.Y_polo_sell_price)/2,
+                            (self.Y_krx_buy_price + self.Y_krx_sell_price)/2))
+
+                self.win_altbtc_ticker = self.viz.line(
+                        X = X,
+                        Y = Y,
+                        win = self.win_altbtc_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Price in BTC',
+                            legend = ['POLONIEX', 'BITHUMB'])
+                        )
+                # ALTKRW
+                self.win_altkrw_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([(self.krx_bot.altkrw_buy_price + self.krx_bot.altkrw_buy_price)/2]),
+                        win = self.win_altkrw_ticker,
+                        opts =dict(
+                            title = self.alt_name + ' Price in KRW',
+                            legend = ['BITHUMB'])
+                        )
+                # BTCKRW
+                self.win_btckrw_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([(self.krx_bot.btckrw_buy_price + self.krx_bot.btckrw_buy_price)/2]),
+                        win = self.win_btckrw_ticker,
+                        opts =dict(
+                            title = 'BTC Price in KRW',
+                            legend = ['BITHUMB'])
+                        )
+                # BTCUSD
+                self.win_btcusd_ticker = self.viz.line(
+                        X = curr_time,
+                        Y = np.array([self.polo_bot.btcusd()]),
+                        win = self.win_btcusd_ticker,
+                        opts =dict(
+                            title = 'BTC Price in USD',
+                            legend = ['POLONIEX'])
+                        )
+            except ImportError:
+               print('visdom not imported')
+
+
 
     def refresh(self):
         btcsum = self.asset_in_btc()
         self.total_ratio = btcsum / self.asset_init
         self.btc_ratio = self.btc_sum() / self.btc_init
         self.alt_ratio = self.alt_sum() / self.alt_init
-
 
     def btc_sum(self):
         return self.polo_bot.btc_balance + self.krx_bot.btc_balance + self.polo_bot.btc_in_tx + self.krx_bot.btc_in_tx
@@ -241,7 +347,7 @@ class Arby:
     def check_transaction(self):
         refr = False
         if self.polo_alt_tx_info: # ALT : polo -> krx
-            if time.time() - self.polo_alt_tx_info['time']  > self.time_tx:
+            if time.time() - self.polo_alt_tx_info['time']  > self.delay_tx:
                 self.krx_bot.alt_deposit(self.polo_alt_tx_info['amount'])
                 print("ALT : POLO -> {}".format(self.krx_bot.exchange_name))
                 self.polo_alt_tx_info = None
@@ -249,7 +355,7 @@ class Arby:
                 refr = True
 
         if self.polo_btc_tx_info: # BTC : polo -> krx
-            if time.time() - self.polo_btc_tx_info['time'] > self.time_tx:
+            if time.time() - self.polo_btc_tx_info['time'] > self.delay_tx:
                 self.krx_bot.btc_deposit(self.polo_btc_tx_info['amount'])
                 print("BTC : POLO -> {}".format(self.krx_bot.exchange_name))
                 self.polo_btc_tx_info = None
@@ -257,7 +363,7 @@ class Arby:
                 refr = True
 
         if self.krx_alt_tx_info: # ALT : krx -> polo
-            if time.time() - self.krx_alt_tx_info['time'] > self.time_tx:
+            if time.time() - self.krx_alt_tx_info['time'] > self.delay_tx:
                 self.polo_bot.alt_deposit(self.krx_alt_tx_info['amount'])
                 print("ALT : {} -> POLO".format(self.krx_bot.exchange_name))
                 self.krx_alt_tx_info = None
@@ -265,7 +371,7 @@ class Arby:
                 refr = True
 
         if self.krx_btc_tx_info: # BTC : polo -> krx
-            if time.time() - self.krx_btc_tx_info['time'] > self.time_tx:
+            if time.time() - self.krx_btc_tx_info['time'] > self.delay_tx:
                 self.polo_bot.btc_deposit(self.krx_btc_tx_info['amount'])
                 print("BTC : {} -> POLO".format(self.krx_bot.exchange_name))
                 self.krx_btc_tx_info = None
@@ -273,59 +379,96 @@ class Arby:
                 refr = True
         return refr
 
+    def calculate_premium_fiat():
+        usdkrw = Currency('USDKRW')
+        curr = float(usdkrw.get_ask())
+        btcusd = self.polo_bot.btcusd()
+        print("\tBTC premeium KRW/USD : ",str((self.krx_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
 
-    # def asset_reallocate(self): # Done instantly. Naive version.
-    #     btc = self.btc_polo + self.btc_krx
-    #     alt = self.alt_polo + self.alt_krx
-    #     self.btc_polo = btc/2
-    #     self.btc_krx = btc/2
-    #     self.alt_polo = alt/2
-    #     self.alt_krx = alt/2
-    #     self.reallo += 1
+    def collect_price_(self):
+        self.krx_bot.collect_price()
+        self.polo_bot.collect_price()
 
-    #     self.polo_with_amount = 0
-    #     self.krx_with_amount = 0
+    def collect_price(self):
+        self.collect_price_()
+        # LOG
+        #Y = np.column_stack((polo_price[i], krx_price[i]))
+        krx_sell_price = np.array([self.krx_bot.sell_price])
+        krx_buy_price = np.array([self.krx_bot.buy_price])
+        polo_sell_price = np.array([self.polo_bot.sell_price])
+        polo_buy_price = np.array([self.polo_bot.buy_price])
 
-    # def transact_btc_start(self, prem_alert):
-    #     btc = self.btc_polo + self.btc_krx
-    #     #if self.btc_polo > self.btc_krx:# polo -> krx
-    #     if prem_alert == -1:
-    #         btc_with =  self.btc_polo * 0.9 # withdraw 80%
-    #         self.btc_depo_delayed = btc_with - commision_polo2krx
+        # also Ticker
+        self.Y_krx_buy_price = np.append(self.Y_krx_buy_price, krx_buy_price)
+        self.Y_krx_sell_price = np.append(self.Y_krx_sell_price, krx_sell_price)
+        self.Y_polo_buy_price = np.append(self.Y_polo_buy_price, polo_buy_price)
+        self.Y_polo_sell_price = np.append(self.Y_polo_sell_price, polo_sell_price)
+        # side info for simulation
+        self.Y_krx_altkrw_buy_price = np.append(self.Y_krx_altkrw_buy_price,
+                np.array([self.krx_bot.altkrw_buy_price]))
+        self.Y_krx_altkrw_sell_price = np.append(self.Y_krx_altkrw_sell_price,
+                np.array([self.krx_bot.altkrw_sell_price]))
+        self.Y_krx_btckrw_buy_price = np.append(self.Y_krx_btckrw_buy_price,
+                np.array([self.krx_bot.btckrw_buy_price]))
+        self.Y_krx_btckrw_sell_price = np.append(self.Y_krx_btckrw_sell_price,
+                np.array([self.krx_bot.btckrw_sell_price]))
+        btcusd = self.polo_bot.btcusd()
+        self.Y_polo_btcusd_price = np.append(self.Y_polo_btcusd_price,
+                np.array([btcusd]))
 
-    #         self.btc_polo -= btc_with
-    #         self.polo_with_amount += btc_with
-    #         return 1 # polo -> krx
-    #     #else:# krx -> polo
-    #     elif prem_alert == +1:
-    #         btc_with =  self.btc_krx * 0.9
-    #         self.btc_depo_delayed = btc_with - commision_krx2polo
+        try:
 
-    #         self.btc_krx -= btc_with
-    #         self.krx_with_amount += btc_with
-    #         return -1 # krx -> polo
-
-    # def transact_btc_done(self,tx_method):
-    #     if tx_method == 1:# polo -> krx
-    #         self.btc_krx += self.btc_depo_delayed
-    #     elif tx_method == -1:# krx -> polo
-    #         self.btc_polo += self.btc_depo_delayed
-    #     self.btc_depo_delayed = 0
+            time_stamp = time.time() - self.time_init
+            curr_time = np.array([time_stamp/60.]) # per minute
+            # ALTBTC
+            X = np.column_stack((curr_time, curr_time))
+            Y = np.column_stack((
+                (polo_buy_price + polo_sell_price)/2,
+                (krx_buy_price + krx_sell_price)/2)),
+            self.viz.updateTrace(
+                X = X,
+                Y = Y[0], # TODO : Why thue fuck [0]?
+                win = self.win_altbtc_ticker,
+            )
+            # ALTKRW
+            self.viz.updateTrace(
+                    X = curr_time,
+                    Y = np.array([(self.krx_bot.altkrw_buy_price + self.krx_bot.altkrw_buy_price)/2]),
+                    win = self.win_altkrw_ticker,
+                    )
+            # BTCKRW
+            self.viz.updateTrace(
+                    X = curr_time,
+                    Y = np.array([(self.krx_bot.btckrw_buy_price + self.krx_bot.btckrw_buy_price)/2]),
+                    win = self.win_btckrw_ticker,
+                    )
+            # BTCUSD
+            self.viz.updateTrace(
+                    X = curr_time,
+                    Y = np.array([btcusd]),
+                    win = self.win_btcusd_ticker,
+                    )
+        except ImportError:
+            print('Visdom not imported')
 
     def ticker_premium(self, threhold):
         prem_pos_r = (self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1) * 100
         prem_neg_r = (self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1) * 100
         return (prem_pos_r, prem_neg_r)
-
-    def calculate_premium(self, count, threshold):
-        # 	print('BITHUMB :  \tBUY: ', b_buy_price, '\tSELL: ', b_sell_price, '\t|')
-        # 	print('POLO :   \tBUY: ', p_buy_price, '\tSELL: ', p_sell_price, '\t|')
-        #print(pform.format(krx_name, krx_bot.buy_price, krx_bot.sell_price))
-        #print(pform.format('POLONIEX', polo_bot.buy_price, polo_bot.sell_price))
-
+    def calculate_premium_(self, threshold):
         prem_pos_r = self.krx_bot.sell_price / (self.polo_bot.buy_price * (1 + self.polo_bot.fee_trd)) -1
         prem_neg_r = self.polo_bot.sell_price * (1 - self.polo_bot.fee_trd)/ self.krx_bot.buy_price -1
+        return (prem_pos_r, prem_neg_r)
 
+
+    def calculate_premium(self, threshold):
+        (prem_pos_r, prem_neg_r) = self.calculate_premium_(threshold)
+
+        ##################
+        # 	print('BITHUMB :  \tBUY: ', b_buy_price, '\tSELL: ', b_sell_price, '\t|')
+        # 	print('POLO :   \tBUY: ', p_buy_price, '\tSELL: ', p_sell_price, '\t|')
+        # print(pform.format(krx_name, krx_bot.buy_price, krx_bot.sell_price))
+        # print(pform.format('POLONIEX', polo_bot.buy_price, polo_bot.sell_price))
         # print("\tPemium monitoring: POLO : BTC->{} | BITH : {}->BTC : {:5.2f}"
         #         .format(self.alt_name,
         #             self.alt_name,
@@ -335,8 +478,9 @@ class Arby:
         #             self.alt_name,
         #             prem_neg_r * 100))
         #print()
-        prem = 0
+        #################
 
+        prem = 0
         #####  Premium compare ###### TODO Threshold : ratio? or delta?
         if(prem_pos_r > threshold):
             #### POLO : BTC -> Target   /    BITHUMB :  Taret -> BTC
@@ -364,10 +508,25 @@ class Arby:
             print('\t{:10.6f}\t {:10.6f}\t|{:10.6f}\t {:10.6f}'
                     .format(self.krx_bot.alt_balance, self.krx_bot.btc_balance, self.polo_bot.btc_balance, self.polo_bot.alt_balance))
             prem = -1
-        #print()
-        if count%100 == 0:
-            usdkrw = Currency('USDKRW')
-            curr = float(usdkrw.get_ask())
-            btcusd = self.polo_bot.btcusd()
-            print("\tBTC premeium KRW/USD : ",str((self.krx_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
+
+        ## log
+        self.Y_prem_pos = np.append(self.Y_prem_pos, prem_pos_r)
+        self.Y_prem_neg = np.append(self.Y_prem_neg, prem_neg_r)
+        ## Needs visdom
+        try:
+
+            time_stamp = time.time() - self.time_init
+            curr_time = np.array([time_stamp/60.]) # per minute
+            X = np.column_stack((curr_time, curr_time))
+
+            Y = np.column_stack((
+                np.array([prem_pos_r * 100]),
+                np.array([prem_neg_r * 100])))
+            self.viz.updateTrace(
+                X = X,
+                Y = Y,
+                win = self.win_prem_ticker,
+            )
+        except ImportError:
+            print('Visdom not imported')
         return prem

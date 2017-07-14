@@ -46,9 +46,10 @@ import logging
 import logging.handlers
 
 logger = logging.getLogger('crumbs')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 
 logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 #formatter
@@ -86,6 +87,8 @@ logger.addHandler(streamHandler)
 # TODO : USD limit reached, gets over at final with.
 # TODO : alt_in_tx, btc_in_tx   visualize
 # TODO : visualize with visdom
+# TODO : avoid pending. Use LTC / DASH ? fast transactions
+# TODO : check daily transaction limit in check_transaction
 alt_onetrd_amount_dict = {
         "BTC": 0.03,
         "ETH": 0.2,
@@ -161,15 +164,24 @@ while(True):
     iter_s= time.time()
 
     try:
-        krx_bot.collect_price()
-        polo_bot.collect_price()
+        ## TODO : Log parameters.
+        #krx_bot.altkrw_buy_price
+        #krx_bot.altkrw_sell_price
+        #krx_bot.btckrw_buy_price
+        #krx_bot.btckrw_sell_price
+        #krx_bot.buy_price
+        #krx_bot.sell_price
+        #polo_bot.sell_price
+        #polo_bot.buy_price
+        #polo_bot.btcusdt_buy_price <-- add more
+        #polo_bot.btcusdt_sell_price
+
+        Arby.collect_price()
     except Exception as e:
-        print(e)
-        logger.exception("waiting next iter")
         wait(iter_s)
         continue
 
-    prem_alert = Arby.calculate_premium(iter_arb, threshold)
+    prem_alert = Arby.calculate_premium(threshold)
     #prem_alert = -1
 
 
@@ -189,25 +201,4 @@ while(True):
                 .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
                     Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
         # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
-
-    # Tx between polo and krx
-    # if Arby.btc_depo_delayed > 0: # In tx
-    #     #print(time.time() - t_with , "waiting depo...")
-    #     if time.time() - t_with > t_tx: # Wait 30m. In real, may be faster or slower.
-    #         Arby.transact_btc_done(tx_method)
-    #         print("TX Done!")
-    #         Arby.reallo += 1
-    #         Arby.show_asset()
-    # elif Arby.btc_depo_delayed == 0: # Not in tx
-    #     #if Arby.btc_polo / Arby.btc_krx < r_tx or Arby.btc_polo / Arby.btc_krx > 1/r_tx: # or  count % 30 == 0 :
-    #     if Arby.btc_polo / Arby.btc_krx > r_tx or Arby.btc_polo / Arby.btc_krx < 1/r_tx: # or  count % 30 == 0 :
-    #         #if Arby.btc_polo / Arby.btc_krx != 1:
-    #         tx_method = Arby.transact_btc_start(prem_alert)
-    #         t_with = time.time()
-    #         print("TX Start!")
-    #         Arby.show_asset()
-    # if iter_arb % 10 == 0:
-    #     #Arby.asset_reallocate()
-    #     print("NEED IMPLEMENTATION, check current premium and balance")
-
     wait(iter_s)

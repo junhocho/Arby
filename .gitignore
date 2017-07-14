@@ -1,5 +1,6 @@
 log/*.log
 .ipynb_checkpoints/
+*.csv
 __pycache__/
 tags
 
