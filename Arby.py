@@ -1,7 +1,7 @@
 from yahoo_finance import Currency
 import urllib.request
 import time
-
+import pandas as pd
 import numpy as np
 
 def to_unix_time(dt):
@@ -125,12 +125,11 @@ class Arby:
             self.Y_krx_buy_price = np.array([self.krx_bot.buy_price])
             self.Y_polo_sell_price = np.array([self.polo_bot.sell_price])
             self.Y_polo_buy_price = np.array([self.polo_bot.buy_price])
-            self.Y_polo_btcusd_price = np.array([self.polo_bot.btcusd()])
+            self.Y_polo_btcusd_price = np.array([self.polo_bot.btcusd])
 
-            #Ys_prems2show = [1,2,3,4,5]
-            #Ys_price2show = [6,7,8,9,0]
-            #polo_price = [1,2,3,4,5]
-            #krx_price = [1,2,3,4,5]
+            time_stamp = time.time() - self.time_init
+            curr_time = np.array([time_stamp/60.]) # per minute
+            self.X = curr_time
 
             ## Needs Visdom
             try:
@@ -149,10 +148,7 @@ class Arby:
                 self.viz.close(win = self.win_btckrw_ticker)
                 self.viz.close(win = self.win_btcusd_ticker)
 
-                time_stamp = time.time() - self.time_init
-                curr_time = np.array([time_stamp/60.]) # per minute
                 X = np.column_stack((curr_time, curr_time))
-
                 # PREM
                 self.win_prem_ticker = self.viz.line(
                         X = X,
@@ -199,7 +195,7 @@ class Arby:
                 # BTCUSD
                 self.win_btcusd_ticker = self.viz.line(
                         X = curr_time,
-                        Y = np.array([self.polo_bot.btcusd()]),
+                        Y = np.array([self.polo_bot.btcusd]),
                         win = self.win_btcusd_ticker,
                         opts =dict(
                             title = 'BTC Price in USD',
@@ -224,7 +220,7 @@ class Arby:
         total_btc =  self.btc_sum() + self.polo_bot.eval_alt(self.alt_sum())
         return total_btc
     def asset_in_usd(self):
-        return asset_in_btc() * self.polo_bot.btcusd()
+        return asset_in_btc() * self.polo_bot.btcusd
     def asset_in_krw(self):
         return asset_in_btc() * self.krx_bot.btckrw_sell_price
 
@@ -382,7 +378,7 @@ class Arby:
     def calculate_premium_fiat():
         usdkrw = Currency('USDKRW')
         curr = float(usdkrw.get_ask())
-        btcusd = self.polo_bot.btcusd()
+        btcusd = self.polo_bot.btcusd
         print("\tBTC premeium KRW/USD : ",str((self.krx_bot.btckrw_buy_price / (curr * btcusd) )), 'with btcusd =',btcusd )
 
     def collect_price_(self):
@@ -412,13 +408,14 @@ class Arby:
                 np.array([self.krx_bot.btckrw_buy_price]))
         self.Y_krx_btckrw_sell_price = np.append(self.Y_krx_btckrw_sell_price,
                 np.array([self.krx_bot.btckrw_sell_price]))
-        btcusd = self.polo_bot.btcusd()
+        btcusd = self.polo_bot.btcusd
         self.Y_polo_btcusd_price = np.append(self.Y_polo_btcusd_price,
                 np.array([btcusd]))
 
         self.time_stamp = time.time() - self.time_init
+        curr_time = np.array([self.time_stamp/60.]) # per minute
+        self.X = np.append(self.X, curr_time)
         try:
-            curr_time = np.array([self.time_stamp/60.]) # per minute
             # ALTBTC
             X = np.column_stack((curr_time, curr_time))
             Y = np.column_stack((
@@ -523,3 +520,17 @@ class Arby:
         except ImportError:
             print('Visdom not imported')
         return prem
+
+    def log_data(self):
+        pd.DataFrame(self.Y_prem_pos).to_csv("./log/"+self.alt_name+"/Y_prem_pos.csv")
+        pd.DataFrame(self.Y_prem_neg).to_csv("./log/"+self.alt_name+"/Y_prem_neg.csv")
+        pd.DataFrame(self.Y_krx_altkrw_sell_price).to_csv("./log/"+self.alt_name+"/Y_krx_altkrw_sell_price.csv")
+        pd.DataFrame(self.Y_krx_altkrw_buy_price).to_csv("./log/"+self.alt_name+"/Y_krx_altkrw_buy_price.csv")
+        pd.DataFrame(self.Y_krx_btckrw_sell_price).to_csv("./log/"+self.alt_name+"/Y_krx_btckrw_sell_price.csv")
+        pd.DataFrame(self.Y_krx_btckrw_buy_price).to_csv("./log/"+self.alt_name+"/Y_krx_btckrw_buy_price.csv")
+        pd.DataFrame(self.Y_krx_sell_price).to_csv("./log/"+self.alt_name+"/Y_krx_sell_price.csv")
+        pd.DataFrame(self.Y_krx_buy_price).to_csv("./log/"+self.alt_name+"/Y_krx_buy_price.csv")
+        pd.DataFrame(self.Y_polo_sell_price).to_csv("./log/"+self.alt_name+"/Y_polo_sell_price.csv")
+        pd.DataFrame(self.Y_polo_buy_price).to_csv("./log/"+self.alt_name+"/Y_polo_buy_price.csv")
+        pd.DataFrame(self.Y_polo_btcusd_price).to_csv("./log/"+self.alt_name+"/Y_polo_btcusd_price.csv")
+        pd.DataFrame(self.X).to_csv("./log/"+self.alt_name+"/X.csv")

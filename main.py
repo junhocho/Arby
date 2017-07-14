@@ -41,6 +41,10 @@ exp_name = param.exp_name
 
 
 # Setup Logger
+try:
+    os.mkdir('./log/'+alt_kind)
+except Exception:
+    pass
 
 import logging
 import logging.handlers
@@ -178,6 +182,7 @@ while(True):
 
         Arby.collect_price()
     except Exception as e:
+        print(e)
         wait(iter_s)
         continue
 
@@ -201,4 +206,6 @@ while(True):
                 .format(krx_name, alt_kind, iter_arb, time_running , Arby.total_ratio ,
                     Arby.btc_ratio, Arby.alt_ratio, datetime.now()))
         # print as : KORBIT XRP  45091   7524m     1.0179      2017-07-07 05:28:09.393301
+    if(iter_arb % 10) == 0:
+        Arby.log_data()
     wait(iter_s)

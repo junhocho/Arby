@@ -339,6 +339,7 @@ class poloniex_bot:
         pass
 
     def collect_price(self):
+        self.btcusd = float(p_api.returnOrderBook('USDT_BTC')["asks"][0][0])
         self.orderbook = p_api.returnOrderBook(self.alt_name)
         count = 0
         while(float(self.orderbook["asks"][count][1])<self.alt_onetrd_amount):
@@ -386,14 +387,17 @@ class poloniex_bot:
             raise ValueError('POLONIEX {} USD today tx exceeds {} daily limit'
                     .format(self.usd_with_daily_amount, self.usd_with_daily_limit))
 
-    def btcusd(self):
-        ret = None
-        while(not ret): # if ret not returned return it until returned
-            try:
-                ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
-            except Exception:
-                ret = None
-        return int(json.loads(ret.read())['result']['price'])
+    #def btcusd(self):
+    #    ret = None
+    #    while(not ret): # if ret not returned return it until returned
+    #        try:
+    #            ret = urllib.request.urlopen(urllib.request.Request('https://api.cryptowat.ch/markets/poloniex/btcusd/price'))
+    #            print('ret')
+    #        except Exception as e:
+    #            print(e)
+    #            print('not ret')
+    #            ret = None
+    #    return int(json.loads(ret.read())['result']['price'])
 
     def transact_btc2krx(self, btc_with_amount):
         # 1. check krx_bot btc account to tx
@@ -408,7 +412,7 @@ class poloniex_bot:
         print("Tx BTC : POLO -> BITHUMB")
         self.btc_balance -= btc_with_amount
         self.btc_in_tx = btc_in_tx
-        self.usd_with_daily_amount += btc_with_amount * self.btcusd()
+        self.usd_with_daily_amount += btc_with_amount * self.btcusd
         return {'time' : t, 'amount' : btc_in_tx}
 
 
@@ -425,7 +429,7 @@ class poloniex_bot:
         print("Tx ALT : POLO -> BITHUMB")
         self.alt_balance -= alt_with_amount
         self.alt_in_tx = alt_in_tx
-        self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd()
+        self.usd_with_daily_amount += self.eval_alt(alt_with_amount) * self.btcusd
         return {'time' : t, 'amount' : alt_in_tx}
 
 #################################################
