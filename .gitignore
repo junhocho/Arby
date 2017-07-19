@@ -2,6 +2,7 @@ log/*.log
 .ipynb_checkpoints/
 *.csv
 __pycache__/
+data/
 tags
 
 secret.py
