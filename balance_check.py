@@ -16,28 +16,30 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 
-api = XCoinAPI(BITHUMB_API_KEY, BITHUMB_API_SECRET);
+#bithApi = XCoinAPI(BITHUMB_API_KEY, BITHUMB_API_SECRET);
+bithApi = None
 my = Coinone(COINONE_API_KEY, COINONE_API_SECRET)
 polo = Poloniex(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 
 
 ## Bithumb
-rgParams = {
-        "order_currency" : "BTC",
-        "payment_currency" : "KRW",
-        };
-
-bith_balance = {}
-
-coins = ["BTC", "ETH", "ETC", "LTC", "XRP"]
-for c in coins:
+if bithApi:
     rgParams = {
-            "currency" : c};
-    result = api.xcoinApiCall("/info/balance", rgParams);
-    #print(result)
-    bith_balance[c] = result['data']['available_'+c.lower()]
-    #print("{} :\t {}".format(c, result['data']['available_'+c.lower()]))
-bith_balance['KRW'] = result['data']['available_krw']
+            "order_currency" : "BTC",
+            "payment_currency" : "KRW",
+            };
+
+    bith_balance = {}
+
+    coins = ["BTC", "ETH", "ETC", "LTC", "XRP"]
+    for c in coins:
+        rgParams = {
+                "currency" : c};
+        result = bithApi.xcoinApiCall("/info/balance", rgParams);
+        #print(result)
+        bith_balance[c] = result['data']['available_'+c.lower()]
+        #print("{} :\t {}".format(c, result['data']['available_'+c.lower()]))
+    bith_balance['KRW'] = result['data']['available_krw']
 
 # Coinone
 
@@ -52,10 +54,11 @@ coinone_balance['KRW']= mybal['krw']['balance']
 polo_balance = polo.returnBalances()
 
 
-print("==== Bith Balance ==== ")
-for c in bith_balance:
-    if float(bith_balance[c]) > 0:
-        print(c, bith_balance[c])
+if bithApi:
+    print("==== Bith Balance ==== ")
+    for c in bith_balance:
+        if float(bith_balance[c]) > 0:
+            print(c, bith_balance[c])
 print("==== Coinone Balance ==== ")
 for c in coinone_balance:
     if float(coinone_balance[c]) > 0:

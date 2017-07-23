@@ -51,6 +51,7 @@ logger = logging.getLogger('crumbs')
 logger.setLevel(logging.DEBUG)
 
 logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 #formatter
