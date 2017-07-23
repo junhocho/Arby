@@ -11,7 +11,7 @@ def to_unix_time(dt):
 ## TODO Better init.
 # ETC ETH XRP: BTC in krx. ALT in polo
 class Arby:
-    def __init__(self, polo_bot, krx_bot, mode):
+    def __init__(self, polo_bot, krx_bot, mode = 'realtime'):
         r = 10 # 0.3~4 btc
         self.polo_bot = polo_bot
         self.krx_bot = krx_bot
