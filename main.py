@@ -61,15 +61,15 @@ formatter = logging.Formatter('[%(levelname)s|%(filename)s:%(lineno)s] %(asctime
 
 
 # fileHandler and StreamHandler
-fileHandler = logging.FileHandler('./log/loghandler.log')
+#fileHandler = logging.FileHandler('./log/loghandler.log')
 streamHandler = logging.StreamHandler()
 
 # handler formatter
-fileHandler.setFormatter(formatter)
+#fileHandler.setFormatter(formatter)
 streamHandler.setFormatter(formatter)
 
 # handler logging add
-logger.addHandler(fileHandler)
+#logger.addHandler(fileHandler)
 logger.addHandler(streamHandler)
 
 #logger = SlackLogger(os.environ["BITHUMB_API_NAME"])
