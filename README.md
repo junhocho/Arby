@@ -71,5 +71,50 @@ BITHUMB has no fee with coupon.
 
 ![](https://tmmsexy.s3.amazonaws.com/imgs/2017-08-07-130623.jpg)
 
+### Transaction time & confirms
+
+1) 코인원
+
+비트코인(BTC) : 1 confirmation
+이더리움(ETH) : 72 confirmation
+리플(XRP): 1 confirmation(즉시송금)
+2) 빗썸
+
+비트코인(BTC) : 1 confirmation
+리플(XRP): 1 confirmation(즉시송금)
+3) 코빗
+
+비트코인(BTC) : 3 confirmation
+이더리움(ETH): 45 confirmation
+이더리움 클래식(ETC): 100 confirmation
+리플(XRP): 1 confirmation(즉시송금)
+4) 폴로닉스(poloniex)
+
+라이트코인(LTC) : 4 confirmation
+대쉬(DASH) : 6 confirmation
+5) 비트렉스(bittrex)-검색함
+
+BTC - 1 , ETH - 12, ETC - 12, LTC - 3, DASH - 3
+XMR - 3 , ZEC - 3 , XRP - 5, REP - 12, DGD - 12
+XAUR - 12, SNGLS - 12, HKG - 12, SWT - 12
+TIME - 12, MLN - 12 , SDC - 10, DOGE - 3
+NAV - 10, NXT - 4, ARDR - 4, RADS - 3, LSK - 10
+CLAM - 3, VOX - 3
+6) 비파이넥스(bitfinex)
+
+BTC: 3 confirmation
+ETH: 25 confirmation
+ETC: 100 confirmation
+Zcash: 15 confirmation
+Monero: 15 confirmation
+LTC: 6 confirmation
+Dash: 9 confirmation
+XRP: 1 confirmation
+Tether: 3 confirmation
+이오스(EOS) : 25 confirmation
+
+[from blog](https://steemit.com/kr/@bonghans/2-transaction-confirmation)
+
 
 written by JunhoCho
+
