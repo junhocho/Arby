@@ -1,3 +1,13 @@
+# Intro
+
+This was a experiment of Arbitrage trading between in&out of Korea.
+Its simulation showed steady good profit but as exchange does not gaurantee to send cryptos in time, there's always risk.
+Tried to implement real arbitrage with exchange API but stopped because of the risk.
+Use it as wish.
+
+# Setup
+
+
 for raspberrypi : `sudo apt-get install libcurl4-openssl-dev`
 `pip install pycurl`
 
